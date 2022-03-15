@@ -82,16 +82,24 @@ app.post('/process-upload-matrix', async (req, res) => {
 });
 
 function toArray(path){
+    /*
+        Converts matrix text file to a 2D array in O(6n^2) time using O(n^2) space.
+        File uses " " to seperate columns and /n to seperate rows.
+
+        To improve: calculate addition/multiplication while reading the array for O(n^2)
+    */
     matrix = []
     if (fs.existsSync(path)){
-        var rows = fs.readFileSync(path).toString().split("\n");
+        //O(N^2)
+        var rows = fs.readFileSync(path).toString().split("\n"); //O(3N^2)
+        //O(N^2)
         for (i in rows){
-            var array = rows[i].split(" ");
-            row =[]
+            var array = rows[i].split(" "); //O(N)
+            row =[] 
             for (x in array){
-                row.push(Number(array[x]))
+                row.push(Number(array[x])) //O(1)
             }
-            matrix.push(row)
+            matrix.push(row) //O(1)
         
         }
 
@@ -117,20 +125,24 @@ function toHTML(A){
 
 
 app.get('/add', async (req, res) => {
+    /*
+        REST get method to add two matrices in O(7n^2) time using O(3n^2) space.
+    */
     console.log("Add")
     //console.log("10 12".split(" "))
-    matrix1 = toArray(path1)
-    matrix2 = toArray(path2)
+    matrix1 = toArray(path1) //O(n^2)
+    matrix2 = toArray(path2) //O(n^2)
     N=matrix2.length
-    var result =  Array(N).fill().map(() => Array(N));
+    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
 
     //var result = []
     var result = matrix1
     for (i = 0; i < N; i++){
         for (j = 0; j < N; j++){
-            result[i][j] = matrix1[i][j] + matrix2[i][j];
+            result[i][j] = matrix1[i][j] + matrix2[i][j]; //O(3)
     }}
 
+    //O(n^2)
     res.write("<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body><table>")
     for (i = 0; i < N; i++){
         res.write("<tr>")
@@ -147,13 +159,78 @@ app.get('/add', async (req, res) => {
 
 });
 
+function read(filePath) {
+    const readableStream = fs.createReadStream(filePath, 'utf8');
+
+    readableStream.on('error', function (error) {
+        console.log(`error: ${error.message}`);
+    })
+
+    readableStream.on('data', (chunk) => {
+        console.log("h:",chunk);
+    })
+}
+
+app.get('/add3', async (req, res) => {
+    var readable1 = fs.createReadStream(path1, {
+        encoding: 'utf8',
+        fd: null,
+    });
+
+    var readable2 = fs.createReadStream(path2, {
+        encoding: 'utf8',
+        fd: null,
+    });
+
+    readable1.on('readable', function() {
+      var chunk;
+      while (null !== (chunk1 = readable1.read(1) && null !== (chunk2 = readable2.read(1)) /* here */)) {
+        console.log(chunk1, chunk2); // chunk is one byte
+      }
+    });
+});
+
+app.get('/add2', async (req, res) => {
+    if (fs.existsSync(path1) && fs.existsSync(path2)){
+        rows1 = fs.readFileSync(path1).toString().split(/\s+/) //O(n^2)
+        rows2 = fs.readFileSync(path1).toString().split(/\s+/) //O(n^2)
+        N=3
+        n = 0
+        res.write("<!DOCTYPE html><html><body><h1>Matrix Addition</h1><body><table><tr>")
+        for (var i = 0; i < rows1.length; i++){
+            if(n == N){
+                res.write("</tr>") 
+                res.write("<tr>") 
+                n = 1
+            }else{
+                n += 1
+            }
+            console.log(n)
+            res.write("<td>") 
+            res.write(String(Number(rows1[i])+Number(rows2[i]))) 
+            res.write("</td>") 
+        }
+        res.write("</tr></table></body></html>")
+        res.end()
+        return "Finished"
+        
+    }
+        
+
+});
+
 app.get('/multiply', async (req, res) => {
+    /*
+        REST get method to multiply two matrices in O(4n^3 + 14n^2) time using O(3n^2) space.
+    */
     console.log("Multiply")
     //console.log("10 12".split(" "))
-    matrix1 = toArray(path1)
-    matrix2 = toArray(path2)
-    N = matrix1.length
-    var result =  Array(N).fill().map(() => Array(N));
+    matrix1 = toArray(path1) // O(6n^2)
+    matrix2 = toArray(path2) //O(6n^2)
+    N = matrix1.length //O(1)
+    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
+
+    //O(4n^3)
     for (var i = 0; i < N; i++)
     {
         for (var j = 0; j < N; j++)
@@ -161,16 +238,17 @@ app.get('/multiply', async (req, res) => {
             result[i][j] = 0;
             for (var k = 0; k < N; k++)
             {
-                result[i][j] += matrix1[i][k]*matrix2[k][j];
+                result[i][j] += matrix1[i][k]*matrix2[k][j]; //O(4)
             }
         }
     }
+    //O(n^2)
     res.write("<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body><table>")
     for (i = 0; i < N; i++){
         res.write("<tr>")
         for (j = 0; j < N; j++){
             res.write("<td>")
-            res.write(String(result[i][j]))
+            res.write(String(result[i][j])) //O(2)
             res.write("</td>")
          }
          res.write("</tr>")
