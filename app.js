@@ -3,6 +3,7 @@ const fileUpload = require('express-fileupload');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
+const path = require('path');
 const _ = require('lodash');
 
 const app = express();
@@ -30,14 +31,14 @@ app.listen(port, () =>
   console.log(`App is listening on port ${port}.`)
 );
 
-const path1 = "/home/remi/Documents/Matrix/uploads/matrix1.txt"
-const path2 = "/home/remi/Documents/Matrix/uploads/matrix2.txt"
+const path1 = path.resolve('./uploads/matrix1.txt')
+const path2 = path.resolve('./uploads/matrix2.txt')
 
 app.get('/', async (req, res) => {
     res.write("<!DOCTYPE html><html><body><h1>Home</h1>")
     res.write("<a href='/upload-matrix'>Upload matrix</a>")
     
-    if (fs.existsSync("/home/remi/Documents/Matrix/uploads/matrix1.txt") && fs.existsSync("/home/remi/Documents/Matrix/uploads/matrix1.txt")) {
+    if (fs.existsSync(path1, 'UTF-8') && fs.existsSync(path2, 'UTF-8')) {
         res.write("<br><a href='/multiply'>Multiply matrix</a>")
         res.write("<br><a href='/add'>Add matrix</a>")
     }
@@ -47,7 +48,7 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/upload-matrix', async (req, res) => {
-    res.sendFile("/home/remi/Documents/Matrix/upload.html")
+    res.sendFile(path.resolve('./upload.html'), 'UTF-8')
 });
 
 app.post('/process-upload-matrix', async (req, res) => {
@@ -58,12 +59,12 @@ app.post('/process-upload-matrix', async (req, res) => {
                 message: 'No file uploaded'
             });
         } else {
-            if (fs.existsSync("/home/remi/Documents/Matrix/uploads/matrix1.txt")) {
-                fs.unlinkSync("/home/remi/Documents/Matrix/uploads/matrix1.txt")
+            if (fs.existsSync(path1, 'UTF-8')) {
+                fs.unlinkSync(path1, 'UTF-8')
             }
 
-            if (fs.existsSync("/home/remi/Documents/Matrix/uploads/matrix2.txt")){
-                fs.unlinkSync("/home/remi/Documents/Matrix/uploads/matrix2.txt") 
+            if (fs.existsSync(path2, 'UTF-8')){
+                fs.unlinkSync(path2, 'UTF-8') 
             }
             //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
             let matrix1 = req.files.matrix1;
@@ -131,7 +132,9 @@ app.get('/add', async (req, res) => {
     console.log("Add")
     //console.log("10 12".split(" "))
     matrix1 = toArray(path1) //O(n^2)
+
     matrix2 = toArray(path2) //O(n^2)
+    console.dir(matrix2)
     N=matrix2.length
     var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
 
