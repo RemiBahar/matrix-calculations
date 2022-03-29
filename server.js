@@ -10,13 +10,12 @@ function toMessage(array){
     return {message:return_message}
 }
 
-// Convert matrix text file to array
 function toArray(path){
     /*
         Converts matrix text file to a 2D array in O(6n^2) time using O(n^2) space.
         File uses " " to seperate columns and /n to seperate rows.
 
-        To improve: calculate addition/multiplication while reading the array for O(n^2)
+        No error handling is used.
     */
     matrix = []
     if (fs.existsSync(path)){
@@ -58,6 +57,9 @@ const path2 = path.resolve('./uploads/matrix2.txt')
 
 // Perform matrix addition
 function addMatrices(call, callback) {
+    /*
+        Adds together matrices and returns the result as a proto
+    */
     matrix1 = toArray(path1) //O(n^2)
     matrix2 = toArray(path2) //O(n^2)
     N=matrix2.length
