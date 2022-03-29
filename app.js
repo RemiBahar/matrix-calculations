@@ -23,6 +23,7 @@ app.use(morgan('dev'));
 
 const fs = require("fs"); // Or `import fs from "fs";` with ESM
 const { result } = require('lodash');
+var AddResult = 0
 
 //start app 
 const port = process.env.PORT || 3000;
@@ -33,6 +34,24 @@ app.listen(port, () =>
 
 const path1 = path.resolve('./uploads/matrix1.txt')
 const path2 = path.resolve('./uploads/matrix2.txt')
+
+var PROTO_PATH = path.resolve('./helloworld.proto');
+
+var parseArgs = require('minimist');
+var grpc = require('@grpc/grpc-js');
+var protoLoader = require('@grpc/proto-loader');
+var packageDefinition = protoLoader.loadSync(
+    PROTO_PATH,
+    {keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true
+    });
+var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
+
+target = 'localhost:50051';
+var client = new hello_proto.Greeter(target, grpc.credentials.createInsecure());
 
 app.get('/', async (req, res) => {
     res.write("<!DOCTYPE html><html><body><h1>Home</h1>")
@@ -82,6 +101,21 @@ app.post('/process-upload-matrix', async (req, res) => {
 
 });
 
+function protoToArray(x){
+    for (i = 0; i < x.length; i++){
+        console.log(x[i].items)
+        console.log("new")
+    }
+}
+
+function responseToArray(x){
+    for (i = 0; i < x.items.length; i++){
+       res.write(String(x.items[i]))
+    }
+}
+
+
+
 function toArray(path){
     /*
         Converts matrix text file to a 2D array in O(6n^2) time using O(n^2) space.
@@ -124,11 +158,31 @@ function toHTML(A){
     return string
 }
 
+function requestAdd() {
+    target = 'localhost:50051';
+    var client = new hello_proto.Greeter(target, grpc.credentials.createInsecure());
+    client.addMatrices({},function(err, response) {
+      //console.log('Greeting:', response.message);
+      var AddResult = response.message
+      //console.log(AddResult)
+      return AddResult
+      //protoToArray(response.message)
+      
+    });
+    
+    console.log("two")
+    console.log(AddResult)
+  }
 
 app.get('/add', async (req, res) => {
+    console.log("Add")
+    requestAdd()
+    res.write("Done")
+    res.end()
     /*
         REST get method to add two matrices in O(7n^2) time using O(3n^2) space.
     */
+   /*
     console.log("Add")
     //console.log("10 12".split(" "))
     matrix1 = toArray(path1) //O(n^2)
@@ -159,7 +213,7 @@ app.get('/add', async (req, res) => {
     //console.log(toHTML(result))
     res.write("</table></body></html>")
     res.end()
-
+    */
 });
 
 function read(filePath) {
@@ -222,11 +276,29 @@ app.get('/add2', async (req, res) => {
 
 });
 
+function requestMultiply() {
+    target = 'localhost:50051';
+    var client = new hello_proto.Greeter(target, grpc.credentials.createInsecure());
+    t=client.multiplyMatrices({},function(err, response) {
+      console.log('Greeting:', response.message);
+      //response.message.map(responseToArray)
+
+    });
+    console.log(t)
+}
+
+
+
 app.get('/multiply', async (req, res) => {
     /*
         REST get method to multiply two matrices in O(4n^3 + 14n^2) time using O(3n^2) space.
     */
     console.log("Multiply")
+    t = requestMultiply()
+    console.log(t)
+    res.write("Done")
+    res.end()
+    /*
     //console.log("10 12".split(" "))
     matrix1 = toArray(path1) // O(6n^2)
     matrix2 = toArray(path2) //O(6n^2)
@@ -259,6 +331,6 @@ app.get('/multiply', async (req, res) => {
     //console.log(toHTML(result))
     res.write("</table></body></html>")
     res.end()
-    return "Finished"
+    return "Finished"*/
 
 });
