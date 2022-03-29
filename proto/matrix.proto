@@ -1,0 +1,26 @@
+// Set-up
+syntax = "proto3";
+package matrix;
+
+// The greeting service definition.
+service Greeter {
+  // Sends a greeting
+  rpc addMatrices (Request) returns (Matrix) {}
+  rpc multiplyMatrices (Request) returns (Matrix) {}
+}
+
+// The request message -- not used
+message Request {
+  string name = 1;
+}
+
+// The response message 
+message Row {
+   repeated int32 items = 1;
+}
+
+
+message Matrix {
+    //repeated int32 message = 1;
+    repeated Row message = 1;
+}

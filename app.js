@@ -1,43 +1,72 @@
+//Set-up express app
 const express = require('express');
 const fileUpload = require('express-fileupload');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const morgan = require('morgan');
-const _ = require('lodash');
+const path = require('path');
 
 const app = express();
-
-// enable files upload
-app.use(fileUpload({
-    createParentPath: true
-}));
-
-app.set('view engine', 'pug')
-
-//add other middleware
-app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(morgan('dev'));
-
-const fs = require("fs"); // Or `import fs from "fs";` with ESM
-const { result } = require('lodash');
-
-//start app 
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => 
   console.log(`App is listening on port ${port}.`)
 );
 
-const path1 = "/home/remi/Documents/Matrix/uploads/matrix1.txt"
-const path2 = "/home/remi/Documents/Matrix/uploads/matrix2.txt"
+// For handling files
+app.use(fileUpload({
+    createParentPath: true
+}));
 
+const fs = require("fs"); // Or `import fs from "fs";` with ESM
+
+const path1 = path.resolve('./uploads/matrix1.txt')
+const path2 = path.resolve('./uploads/matrix2.txt')
+
+var dir = './html';
+
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+}
+
+// For gRPC
+var PROTO_PATH = path.resolve('./proto/matrix.proto');
+
+var parseArgs = require('minimist');
+var grpc = require('@grpc/grpc-js');
+var protoLoader = require('@grpc/proto-loader');
+var packageDefinition = protoLoader.loadSync(
+    PROTO_PATH,
+    {keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true
+    });
+var matrixProto = grpc.loadPackageDefinition(packageDefinition).matrix;
+
+target = 'localhost:50051';
+var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
+
+// Convert protocol message to HTML
+function responseToHTML(x){
+    output = "<table>"
+    for (i = 0; i < x.length; i++){
+        output += "<tr>"
+        for (j = 0; j < x[i].items.length; j++){
+            output += "<td>" + x[i].items[j] + "</td>"
+        }
+        output += "</tr>"
+    }
+    output += "</table>"
+
+    return output
+}
+
+// Homepage
 app.get('/', async (req, res) => {
     res.write("<!DOCTYPE html><html><body><h1>Home</h1>")
     res.write("<a href='/upload-matrix'>Upload matrix</a>")
     
-    if (fs.existsSync("/home/remi/Documents/Matrix/uploads/matrix1.txt") && fs.existsSync("/home/remi/Documents/Matrix/uploads/matrix1.txt")) {
+    // Display Add and Multiply matrix links if matrix files uploaded
+    if (fs.existsSync(path1, 'UTF-8') && fs.existsSync(path2, 'UTF-8')) {
         res.write("<br><a href='/multiply'>Multiply matrix</a>")
         res.write("<br><a href='/add'>Add matrix</a>")
     }
@@ -46,30 +75,34 @@ app.get('/', async (req, res) => {
     res.end()
 });
 
+// Upload matrix page
 app.get('/upload-matrix', async (req, res) => {
-    res.sendFile("/home/remi/Documents/Matrix/upload.html")
+    res.sendFile(path.resolve('./html/upload.html'), 'UTF-8')
 });
 
+// Process matrix file uploads
 app.post('/process-upload-matrix', async (req, res) => {
     try {
+        // Check for file upload request
         if(!req.files) {
             res.send({
                 status: false,
-                message: 'No file uploaded'
+                message: 'No files requested to be uploaded'
             });
         } else {
-            if (fs.existsSync("/home/remi/Documents/Matrix/uploads/matrix1.txt")) {
-                fs.unlinkSync("/home/remi/Documents/Matrix/uploads/matrix1.txt")
+            // Check if previous files uploaded. New files will overwrite previous files.
+            if (fs.existsSync(path1, 'UTF-8')) {
+                fs.unlinkSync(path1, 'UTF-8')
             }
 
-            if (fs.existsSync("/home/remi/Documents/Matrix/uploads/matrix2.txt")){
-                fs.unlinkSync("/home/remi/Documents/Matrix/uploads/matrix2.txt") 
+            if (fs.existsSync(path2, 'UTF-8')){
+                fs.unlinkSync(path2, 'UTF-8') 
             }
-            //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
+ 
             let matrix1 = req.files.matrix1;
             let matrix2 = req.files.matrix2;
             
-            //Use the mv() method to place the file in upload directory (i.e. "uploads")
+            //Use the mv() method to place the file in uploads directory 
             matrix1.mv('./uploads/' + matrix1.name);
             matrix2.mv('./uploads/' + matrix2.name);
 
@@ -81,181 +114,54 @@ app.post('/process-upload-matrix', async (req, res) => {
 
 });
 
-function toArray(path){
-    /*
-        Converts matrix text file to a 2D array in O(6n^2) time using O(n^2) space.
-        File uses " " to seperate columns and /n to seperate rows.
+  // Handles matrix addition requests
+  app.get('/add', async (req, res) => {
+    if (fs.existsSync(path1, 'UTF-8') && fs.existsSync(path2, 'UTF-8')) {
+        console.log("Performing addition")
 
-        To improve: calculate addition/multiplication while reading the array for O(n^2)
-    */
-    matrix = []
-    if (fs.existsSync(path)){
-        //O(N^2)
-        var rows = fs.readFileSync(path).toString().split("\n"); //O(3N^2)
-        //O(N^2)
-        for (i in rows){
-            var array = rows[i].split(" "); //O(N)
-            row =[] 
-            for (x in array){
-                row.push(Number(array[x])) //O(1)
-            }
-            matrix.push(row) //O(1)
-        
-        }
+        target = 'localhost:50051';
+        var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
 
-        return matrix
-        
+        client.addMatrices({},function(err, response) {
+            html = "<!DOCTYPE html><html><body><h1>Matrix Addition</h1><body>"
+            html += responseToHTML(response.message)
+            html += "</body></html"
+
+            fs.writeFile('./html/addition.html', html, function (err) {
+                if (err) throw err;
+                res.sendFile(path.resolve('./html/addition.html'), 'UTF-8')
+            });
+
+        });
+
+    } else {
+        console.log("Unable to add - no matrix files uploaded")
+        res.redirect("/");
     }
-}
 
-function toHTML(A){
-    string = ""
-    N = A.length
-    for (i = 0; i < N; i++){
-        for (j = 0; j < N; j++){
-            
-            t = String(A[i][j])
-            string.concat(t)
-            console.log(string)
-        }
-        string.concat("<br>")
-    }
-    return string
-}
-
-
-app.get('/add', async (req, res) => {
-    /*
-        REST get method to add two matrices in O(7n^2) time using O(3n^2) space.
-    */
-    console.log("Add")
-    //console.log("10 12".split(" "))
-    matrix1 = toArray(path1) //O(n^2)
-    matrix2 = toArray(path2) //O(n^2)
-    N=matrix2.length
-    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
-
-    //var result = []
-    var result = matrix1
-    for (i = 0; i < N; i++){
-        for (j = 0; j < N; j++){
-            result[i][j] = matrix1[i][j] + matrix2[i][j]; //O(3)
-    }}
-
-    //O(n^2)
-    res.write("<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body><table>")
-    for (i = 0; i < N; i++){
-        res.write("<tr>")
-        for (j = 0; j < N; j++){
-            res.write("<td>")
-            res.write(String(result[i][j]))
-            res.write("</td>")
-         }
-         res.write("</tr>")
-    }
-    //console.log(toHTML(result))
-    res.write("</table></body></html>")
-    res.end()
-
+    
 });
 
-function read(filePath) {
-    const readableStream = fs.createReadStream(filePath, 'utf8');
-
-    readableStream.on('error', function (error) {
-        console.log(`error: ${error.message}`);
-    })
-
-    readableStream.on('data', (chunk) => {
-        console.log("h:",chunk);
-    })
-}
-
-app.get('/add3', async (req, res) => {
-    var readable1 = fs.createReadStream(path1, {
-        encoding: 'utf8',
-        fd: null,
-    });
-
-    var readable2 = fs.createReadStream(path2, {
-        encoding: 'utf8',
-        fd: null,
-    });
-
-    readable1.on('readable', function() {
-      var chunk;
-      while (null !== (chunk1 = readable1.read(1) && null !== (chunk2 = readable2.read(1)) /* here */)) {
-        console.log(chunk1, chunk2); // chunk is one byte
-      }
-    });
-});
-
-app.get('/add2', async (req, res) => {
-    if (fs.existsSync(path1) && fs.existsSync(path2)){
-        rows1 = fs.readFileSync(path1).toString().split(/\s+/) //O(n^2)
-        rows2 = fs.readFileSync(path1).toString().split(/\s+/) //O(n^2)
-        N=3
-        n = 0
-        res.write("<!DOCTYPE html><html><body><h1>Matrix Addition</h1><body><table><tr>")
-        for (var i = 0; i < rows1.length; i++){
-            if(n == N){
-                res.write("</tr>") 
-                res.write("<tr>") 
-                n = 1
-            }else{
-                n += 1
-            }
-            console.log(n)
-            res.write("<td>") 
-            res.write(String(Number(rows1[i])+Number(rows2[i]))) 
-            res.write("</td>") 
-        }
-        res.write("</tr></table></body></html>")
-        res.end()
-        return "Finished"
-        
-    }
-        
-
-});
-
+// Handle matrix multiplication requests
 app.get('/multiply', async (req, res) => {
-    /*
-        REST get method to multiply two matrices in O(4n^3 + 14n^2) time using O(3n^2) space.
-    */
-    console.log("Multiply")
-    //console.log("10 12".split(" "))
-    matrix1 = toArray(path1) // O(6n^2)
-    matrix2 = toArray(path2) //O(6n^2)
-    N = matrix1.length //O(1)
-    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
+    if (fs.existsSync(path1, 'UTF-8') && fs.existsSync(path2, 'UTF-8')) {
+        console.log("Performing multiplication")
+        target = 'localhost:50051';
+        var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
 
-    //O(4n^3)
-    for (var i = 0; i < N; i++)
-    {
-        for (var j = 0; j < N; j++)
-        {
-            result[i][j] = 0;
-            for (var k = 0; k < N; k++)
-            {
-                result[i][j] += matrix1[i][k]*matrix2[k][j]; //O(4)
-            }
-        }
-    }
-    //O(n^2)
-    res.write("<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body><table>")
-    for (i = 0; i < N; i++){
-        res.write("<tr>")
-        for (j = 0; j < N; j++){
-            res.write("<td>")
-            res.write(String(result[i][j])) //O(2)
-            res.write("</td>")
-         }
-         res.write("</tr>")
-    }
-    //console.log(toHTML(result))
-    res.write("</table></body></html>")
-    res.end()
-    return "Finished"
+        client.multiplyMatrices({},function(err, response) {
+            html = "<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body>"
+            html += responseToHTML(response.message)
+            html += "</body></html"
 
+            
+            fs.writeFile('./html/multiplication.html', html, function (err) {
+                if (err) throw err;
+                res.sendFile(path.resolve('./html/multiplication.html'), 'UTF-8')
+            });
+            });
+    } else {
+        console.log("Unable to multiply - no matrix files uploaded")
+        res.redirect("/");
+    }
 });
