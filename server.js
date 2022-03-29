@@ -1,41 +1,7 @@
 // For file handling
 path = require('path');
 const fs = require("fs"); // Or `import fs from "fs";` with ESM
-
-function toMessage(array){
-    return_message = []
-    for (i = 0; i < array.length; i++){
-        return_message.push({items:array[i]})
-    }
-    return {message:return_message}
-}
-
-function toArray(path){
-    /*
-        Converts matrix text file to a 2D array in O(6n^2) time using O(n^2) space.
-        File uses " " to seperate columns and /n to seperate rows.
-
-        No error handling is used.
-    */
-    matrix = []
-    if (fs.existsSync(path)){
-        //O(N^2)
-        var rows = fs.readFileSync(path).toString().split("\n"); //O(3N^2)
-        //O(N^2)
-        for (i in rows){
-            var array = rows[i].split(" "); //O(N)
-            row =[] 
-            for (x in array){
-                row.push(Number(array[x])) //O(1)
-            }
-            matrix.push(row) //O(1)
-        
-        }
-
-        return matrix
-        
-    }
-}
+var lib = require('./lib');
 
 // Set-up gRPC
 var PROTO_PATH = path.resolve('./proto/matrix.proto');
@@ -60,47 +26,63 @@ function addMatrices(call, callback) {
     /*
         Adds together matrices and returns the result as a proto
     */
-    matrix1 = toArray(path1) //O(n^2)
-    matrix2 = toArray(path2) //O(n^2)
-    N=matrix2.length
-    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
+    matrix1 = lib.toArray(path1) //O(n^2)
+    matrix2 = lib.toArray(path2)//O(n^2)
+    if(lib.validateMatrices(matrix1,matrix2)){
+        console.log("Adding matrices")
+        N=matrix2.length
+        var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
 
-    //var result = []
-    var result = matrix1
-    for (i = 0; i < N; i++){
-        for (j = 0; j < N; j++){
-            result[i][j] = matrix1[i][j] + matrix2[i][j]; //O(3)
-    }}
-    proto_result = toMessage(result)
-    //callback(null, {message: [{items:[10,20]},{items:[30,40]}]});
-    callback(null, proto_result);
+        //var result = []
+        var result = matrix1
+        for (i = 0; i < N; i++){
+            for (j = 0; j < N; j++){
+                result[i][j] = matrix1[i][j] + matrix2[i][j]; //O(3)
+        }}
+        proto_result = lib.toMessage(result)
+        //callback(null, {message: [{items:[10,20]},{items:[30,40]}]});
+        callback(null, proto_result);
+    } else {
+        console.log("Error adding")
+        proto_result = {message:[]}
+        callback(null, proto_result);
+    }
+    
+    return proto_result
   }
 
   // Perform matrix multiplication
 function multiplyMatrices(call, callback) {
-    matrix1 = toArray(path1) // O(6n^2)
-    matrix2 = toArray(path2) //O(6n^2)
-    N = matrix1.length //O(1)
-    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
+    matrix1 = lib.toArray(path1) // O(6n^2)
+    matrix2 = lib.toArray(path2) //O(6n^2)
+    if(lib.validateMatrices(matrix1,matrix2)){
+        console.log("Multiplying matrices")
+        N = matrix1.length //O(1)
+        var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
 
-    //O(4n^3)
-    for (var i = 0; i < N; i++)
-        {
-            for (var j = 0; j < N; j++)
+        //O(4n^3)
+        for (var i = 0; i < N; i++)
             {
-                result[i][j] = 0;
-                for (var k = 0; k < N; k++)
+                for (var j = 0; j < N; j++)
                 {
-                    result[i][j] += matrix1[i][k]*matrix2[k][j]; //O(4)
+                    result[i][j] = 0;
+                    for (var k = 0; k < N; k++)
+                    {
+                        result[i][j] += matrix1[i][k]*matrix2[k][j]; //O(4)
+                    }
                 }
             }
-        }
 
-    proto_result = toMessage(result)
-    callback(null, proto_result);
-    return proto_result
+        proto_result = lib.toMessage(result)
+        callback(null, proto_result);
+    } else {
+        console.log("Error multiplying")
+        proto_result = {message:[]}
+        callback(null, proto_result);
+    }
+    
+
   }
-
 
 /**
  * Starts an RPC server that receives requests for the Greeter service at the

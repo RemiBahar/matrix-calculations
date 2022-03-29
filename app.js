@@ -51,6 +51,7 @@ if (!fs.existsSync(dir)){
 const path1 = path.resolve('./uploads/matrix1.txt')
 const path2 = path.resolve('./uploads/matrix2.txt')
 
+
 // Extra functions
 const lib = require('./lib');
 
@@ -89,11 +90,8 @@ app.get('/process-callback', async (req, res) => {
         If these criteria are met, user redirected to homepage.
         Otherwise an error page shows with a link to the matrix upload page.
     */
-    matrix1 = fs.readFileSync(path1)
-    matrix2 = fs.readFileSync(path2)
-    
-    m1 = lib.toArray(matrix1)
-    m2 = lib.toArray(matrix2)
+    matrix1 = lib.toArray(path1)
+    matrix2 = lib.toArray(path2)
     if(lib.validateMatrices(matrix1,matrix2)){
         res.redirect("/");
     }
@@ -158,15 +156,20 @@ app.get('/add', async (req, res) => {
     var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
 
     client.addMatrices({},function(err, response) {
-      html = "<!DOCTYPE html><html><body><h1>Matrix Addition</h1><body>"
-      html += lib.responseToHTML(response.message)
-      html += "</body></html"
+      console.log("Received response")
+      if(response.message.length > 0){
+        html = "<!DOCTYPE html><html><body><h1>Matrix Addition</h1><body>"
+        html += lib.responseToHTML(response.message)
+        html += "</body></html"
 
-      fs.writeFile('./html/addition.html', html, function (err) {
-        if (err) throw err;
-        console.log('Saved!');
-        res.sendFile(path.resolve('./html/addition.html'), 'UTF-8')
-      });
+        fs.writeFile('./html/addition.html', html, function (err) {
+            if (err) throw err;
+            
+            res.sendFile(path.resolve('./html/addition.html'), 'UTF-8')
+        });
+      } else {
+        res.redirect("/process-callback")
+      }
 
     });
 });
@@ -182,15 +185,21 @@ app.get('/multiply', async (req, res) => {
     var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
 
     client.multiplyMatrices({},function(err, response) {
-      html = "<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body>"
-      html += lib.responseToHTML(response.message)
-      html += "</body></html"
+      console.log("Received response")
 
-      
-      fs.writeFile('./html/multiplication.html', html, function (err) {
-        if (err) throw err;
-        console.log('Saved!');
-        res.sendFile(path.resolve('./html/multiplication.html'), 'UTF-8')
-      });
+      if(response.message.length > 0){
+
+        html = "<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body>"
+        html += lib.responseToHTML(response.message)
+        html += "</body></html"
+        
+        fs.writeFile('./html/multiplication.html', html, function (err) {
+            if (err) throw err;
+        
+            res.sendFile(path.resolve('./html/multiplication.html'), 'UTF-8')
+        });
+      } else {
+        res.redirect("/process-callback")
+      }
     });
 });
