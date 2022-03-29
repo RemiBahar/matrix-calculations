@@ -53,6 +53,12 @@ var hello_proto = grpc.loadPackageDefinition(packageDefinition).helloworld;
 target = 'localhost:50051';
 var client = new hello_proto.Greeter(target, grpc.credentials.createInsecure());
 
+var dir = './html';
+
+if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+}
+
 app.get('/', async (req, res) => {
     res.write("<!DOCTYPE html><html><body><h1>Home</h1>")
     res.write("<a href='/upload-matrix'>Upload matrix</a>")
@@ -101,20 +107,19 @@ app.post('/process-upload-matrix', async (req, res) => {
 
 });
 
-function protoToArray(x){
+function responseToHTML(x){
+    output = "<table>"
     for (i = 0; i < x.length; i++){
-        console.log(x[i].items)
-        console.log("new")
+        output += "<tr>"
+        for (j = 0; j < x[i].items.length; j++){
+            output += "<td>" + x[i].items[j] + "</td>"
+        }
+        output += "</tr>"
     }
+    output += "</table>"
+
+    return output
 }
-
-function responseToArray(x){
-    for (i = 0; i < x.items.length; i++){
-       res.write(String(x.items[i]))
-    }
-}
-
-
 
 function toArray(path){
     /*
@@ -143,77 +148,22 @@ function toArray(path){
     }
 }
 
-function toHTML(A){
-    string = ""
-    N = A.length
-    for (i = 0; i < N; i++){
-        for (j = 0; j < N; j++){
-            
-            t = String(A[i][j])
-            string.concat(t)
-            console.log(string)
-        }
-        string.concat("<br>")
-    }
-    return string
-}
-
-function requestAdd() {
+  app.get('/add', async (req, res) => {
     target = 'localhost:50051';
     var client = new hello_proto.Greeter(target, grpc.credentials.createInsecure());
+
     client.addMatrices({},function(err, response) {
-      //console.log('Greeting:', response.message);
-      var AddResult = response.message
-      //console.log(AddResult)
-      return AddResult
-      //protoToArray(response.message)
-      
+      html = "<!DOCTYPE html><html><body><h1>Matrix Addition</h1><body>"
+      html += responseToHTML(response.message)
+      html += "</body></html"
+
+      fs.writeFile('./html/addition.html', html, function (err) {
+        if (err) throw err;
+        console.log('Saved!');
+        res.sendFile(path.resolve('./html/addition.html'), 'UTF-8')
+      });
+
     });
-    
-    console.log("two")
-    console.log(AddResult)
-  }
-
-app.get('/add', async (req, res) => {
-    console.log("Add")
-    requestAdd()
-    res.write("Done")
-    res.end()
-    /*
-        REST get method to add two matrices in O(7n^2) time using O(3n^2) space.
-    */
-   /*
-    console.log("Add")
-    //console.log("10 12".split(" "))
-    matrix1 = toArray(path1) //O(n^2)
-
-    matrix2 = toArray(path2) //O(n^2)
-    console.dir(matrix2)
-    N=matrix2.length
-    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
-
-    //var result = []
-    var result = matrix1
-    for (i = 0; i < N; i++){
-        for (j = 0; j < N; j++){
-            result[i][j] = matrix1[i][j] + matrix2[i][j]; //O(3)
-    }}
-
-    //O(n^2)
-    res.write("<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body><table>")
-    for (i = 0; i < N; i++){
-        res.write("<tr>")
-        for (j = 0; j < N; j++){
-            res.write("<td>")
-            res.write(String(result[i][j]))
-            res.write("</td>")
-         }
-         res.write("</tr>")
-    }
-    //console.log(toHTML(result))
-    res.write("</table></body></html>")
-    res.end()
-    */
 });
 
 function read(filePath) {
@@ -228,109 +178,20 @@ function read(filePath) {
     })
 }
 
-app.get('/add3', async (req, res) => {
-    var readable1 = fs.createReadStream(path1, {
-        encoding: 'utf8',
-        fd: null,
-    });
-
-    var readable2 = fs.createReadStream(path2, {
-        encoding: 'utf8',
-        fd: null,
-    });
-
-    readable1.on('readable', function() {
-      var chunk;
-      while (null !== (chunk1 = readable1.read(1) && null !== (chunk2 = readable2.read(1)) /* here */)) {
-        console.log(chunk1, chunk2); // chunk is one byte
-      }
-    });
-});
-
-app.get('/add2', async (req, res) => {
-    if (fs.existsSync(path1) && fs.existsSync(path2)){
-        rows1 = fs.readFileSync(path1).toString().split(/\s+/) //O(n^2)
-        rows2 = fs.readFileSync(path1).toString().split(/\s+/) //O(n^2)
-        N=3
-        n = 0
-        res.write("<!DOCTYPE html><html><body><h1>Matrix Addition</h1><body><table><tr>")
-        for (var i = 0; i < rows1.length; i++){
-            if(n == N){
-                res.write("</tr>") 
-                res.write("<tr>") 
-                n = 1
-            }else{
-                n += 1
-            }
-            console.log(n)
-            res.write("<td>") 
-            res.write(String(Number(rows1[i])+Number(rows2[i]))) 
-            res.write("</td>") 
-        }
-        res.write("</tr></table></body></html>")
-        res.end()
-        return "Finished"
-        
-    }
-        
-
-});
-
-function requestMultiply() {
+app.get('/multiply', async (req, res) => {
     target = 'localhost:50051';
     var client = new hello_proto.Greeter(target, grpc.credentials.createInsecure());
-    t=client.multiplyMatrices({},function(err, response) {
-      console.log('Greeting:', response.message);
-      //response.message.map(responseToArray)
 
+    client.multiplyMatrices({},function(err, response) {
+      html = "<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body>"
+      html += responseToHTML(response.message)
+      html += "</body></html"
+
+      
+      fs.writeFile('./html/multiplication.html', html, function (err) {
+        if (err) throw err;
+        console.log('Saved!');
+        res.sendFile(path.resolve('./html/multiplication.html'), 'UTF-8')
+      });
     });
-    console.log(t)
-}
-
-
-
-app.get('/multiply', async (req, res) => {
-    /*
-        REST get method to multiply two matrices in O(4n^3 + 14n^2) time using O(3n^2) space.
-    */
-    console.log("Multiply")
-    t = requestMultiply()
-    console.log(t)
-    res.write("Done")
-    res.end()
-    /*
-    //console.log("10 12".split(" "))
-    matrix1 = toArray(path1) // O(6n^2)
-    matrix2 = toArray(path2) //O(6n^2)
-    N = matrix1.length //O(1)
-    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
-
-    //O(4n^3)
-    for (var i = 0; i < N; i++)
-    {
-        for (var j = 0; j < N; j++)
-        {
-            result[i][j] = 0;
-            for (var k = 0; k < N; k++)
-            {
-                result[i][j] += matrix1[i][k]*matrix2[k][j]; //O(4)
-            }
-        }
-    }
-    //O(n^2)
-    res.write("<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body><table>")
-    for (i = 0; i < N; i++){
-        res.write("<tr>")
-        for (j = 0; j < N; j++){
-            res.write("<td>")
-            res.write(String(result[i][j])) //O(2)
-            res.write("</td>")
-         }
-         res.write("</tr>")
-    }
-    //console.log(toHTML(result))
-    res.write("</table></body></html>")
-    res.end()
-    return "Finished"*/
-
 });
