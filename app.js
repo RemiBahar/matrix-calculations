@@ -47,13 +47,18 @@ var dir = './html';
 if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
 }
+var Matrix = require('./matrix');
 
 const path1 = path.resolve('./uploads/matrix1.txt')
+var matrix1 = new Matrix(path1)
 const path2 = path.resolve('./uploads/matrix2.txt')
-
+var matrix2 = new Matrix(path2)
 
 // Extra functions
 const lib = require('./lib');
+const calculator = require('./calculator');
+
+
 
 // Home page
 app.get('/', async (req, res) => {
@@ -90,9 +95,7 @@ app.get('/process-callback', async (req, res) => {
         If these criteria are met, user redirected to homepage.
         Otherwise an error page shows with a link to the matrix upload page.
     */
-    matrix1 = lib.toArray(path1)
-    matrix2 = lib.toArray(path2)
-    if(lib.validateMatrices(matrix1,matrix2)){
+    if(calculator.validate(matrix1.toArray(), matrix2.toArray())){
         res.redirect("/");
     }
     else {
@@ -120,21 +123,10 @@ app.post('/process-upload-matrix', async (req, res) => {
                 message: 'No file uploaded'
             });
         } else {
-            if (fs.existsSync(path1, 'UTF-8')) {
-                fs.unlinkSync(path1, 'UTF-8')
-            }
-
-            if (fs.existsSync(path2, 'UTF-8')){
-                fs.unlinkSync(path2, 'UTF-8') 
-            }
-            //Use the name of the input field (i.e. "avatar") to retrieve the uploaded file
-            let matrix1 = req.files.matrix1;
-            let matrix2 = req.files.matrix2;
-
-            //Use the mv() method to place the file in upload directory (i.e. "uploads")
-            matrix1.mv('./uploads/matrix1.txt');
-            matrix2.mv('./uploads/matrix2.txt');
-
+            
+            matrix1.upload(req.files.matrix1)
+            matrix2.upload(req.files.matrix2)
+        
             res.redirect("/process-callback")
             
         }
@@ -157,6 +149,7 @@ app.get('/add', async (req, res) => {
 
     client.addMatrices({},function(err, response) {
       console.log("Received response")
+      console.log(response)
       if(response.message.length > 0){
         html = "<!DOCTYPE html><html><body><h1>Matrix Addition</h1><body>"
         html += lib.responseToHTML(response.message)
@@ -186,7 +179,7 @@ app.get('/multiply', async (req, res) => {
 
     client.multiplyMatrices({},function(err, response) {
       console.log("Received response")
-
+      console.log(response)
       if(response.message.length > 0){
 
         html = "<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body>"
