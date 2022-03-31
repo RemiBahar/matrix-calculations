@@ -18,46 +18,75 @@ var packageDefinition = protoLoader.loadSync(
     });
 var matrixProto = grpc.loadPackageDefinition(packageDefinition).matrix;
 
-const path1 = path.resolve('./uploads/matrix1.txt')
-const path2 = path.resolve('./uploads/matrix2.txt')
-var Matrix = require('./matrix');
-const calculator = require('./calculator');
+function serverToArray(string){
+  var rows = string.split("\n")
+  matrix = []
+ 
+  //O(N^2)
+  //var rows = file.toString().split("\n"); //O(3N^2)
+  var rows = string.split("\n");
 
-var matrix1 = new Matrix(path1)
-var matrix2 = new Matrix(path2)
+  for (i in rows){
+      var array = rows[i].split(" "); //O(N)
 
+      row =[] 
+      for (x in array){
+        n = Number(array[x])
+        row.push(Number(array[x])) //O(1)
+      }
+      matrix.push(row) //O(1)
 
+  }
+
+  return matrix
+   
+}
 // Perform matrix addition
 function addMatrices(call, callback) {
     /*
         Adds together matrices and returns the result as a proto
     */
-    if(calculator.validate(matrix1.toArray(), matrix2.toArray())){
-        console.log("Adding matrices")
-        proto_result = lib.toMessage(calculator.add(matrix1.toArray(),matrix2.toArray()))
-        //callback(null, {message: [{items:[10,20]},{items:[30,40]}]});
-        callback(null, proto_result);
-    } else {
-        console.log("Error adding")
-        proto_result = {message:[]}
-        callback(null, proto_result);
-    }
-    
+    var matrix1 = serverToArray(call.request.array1)
+    var matrix2 = serverToArray(call.request.array2)
+    const N = matrix1.length
+    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
+
+    var result = matrix1
+    for (var i = 0; i < N; i++){
+        for (var j = 0; j < N; j++){
+            result[i][j] = matrix1[i][j] + matrix2[i][j]; //O(3)
+    }}
+
+    proto_result = lib.toMessage(result)
+    callback(null, proto_result);
+
     return proto_result
   }
 
   // Perform matrix multiplication
 function multiplyMatrices(call, callback) {
-    if(calculator.validate(matrix1.toArray(), matrix2.toArray())){
-        console.log("Multiplying matrices")
-        proto_result = lib.toMessage(calculator.multiply(matrix1.toArray(), matrix2.toArray()))
-        callback(null, proto_result);
-    } else {
-        console.log("Error multiplying")
-        proto_result = {message:[]}
-        callback(null, proto_result);
-    }
+    var matrix1 = serverToArray(call.request.array1)
+    var matrix2 = serverToArray(call.request.array2)
+    const N = matrix1.length //O(1)
+    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
+
+    //O(4n^3)
+    for (var i = 0; i < N; i++)
+        {
+            for (var j = 0; j < N; j++)
+            {
+                result[i][j] = 0;
+                for (var k = 0; k < N; k++)
+                {
+                    result[i][j] += matrix1[i][k]*matrix2[k][j]; //O(4)
+                }
+            }
+        }
     
+      proto_result = lib.toMessage(result)
+      callback(null, proto_result);
+  
+      return proto_result
 
   }
 

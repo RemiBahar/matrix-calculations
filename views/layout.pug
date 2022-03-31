@@ -1,0 +1,17 @@
+doctype html
+html(lang='en')
+ head
+   title #{title}
+   <link rel="stylesheet" href="./css/main.css">
+ body
+   <nav>
+   a(href="/") Home |
+   a(href="/upload-matrix") Upload |
+   if uploaded
+    a(href="/add") Add |
+    a(href="/multiply") Multiply
+
+   </nav>
+   
+   h1 #{title}
+   block content

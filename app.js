@@ -12,6 +12,11 @@ app.use(fileUpload({
     createParentPath: true
 }));
 
+// view engine setup
+//app.set('html', path.join(__dirname, 'html'));
+app.set('view engine', 'pug');
+
+// Compile the source code
 const port = process.env.PORT || 3000;
 
 app.listen(port, () => 
@@ -47,19 +52,34 @@ var dir = './html';
 if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
 }
-var Matrix = require('./matrix');
 
 const path1 = path.resolve('./uploads/matrix1.txt')
-var matrix1 = new Matrix(path1)
 const path2 = path.resolve('./uploads/matrix2.txt')
-var matrix2 = new Matrix(path2)
+
 
 // Extra functions
 const lib = require('./lib');
-const calculator = require('./calculator');
 
+var matrix1 = false;
+var matrix2 = false;
+var string1 = false;
+var string2 = false;
 
+checkUpload = function(){
+    returnVal = false
+    if (fs.existsSync(path1, 'UTF-8') && fs.existsSync(path2, 'UTF-8')) {
+        returnVal = true
+        if(matrix1 == false || matrix2 == false || string1 == false || string2 == false){
+            string1 = fs.readFileSync(path1).toString("UTF-8")
+            matrix1 = string1.split("\n")
+            string2 = fs.readFileSync(path2).toString("UTF-8")
+            matrix2 = string2.split("\n")
+        }
+    }
+    return returnVal
 
+    
+}
 // Home page
 app.get('/', async (req, res) => {
     /*
@@ -68,44 +88,20 @@ app.get('/', async (req, res) => {
 
         Multiply and Add links are shown if matrices have been uploaded
     */
-    res.write("<!DOCTYPE html><html><body><h1>Home</h1>")
-    res.write("<a href='/upload-matrix'>Upload matrix</a>")
-    
-    if (fs.existsSync(path1, 'UTF-8') && fs.existsSync(path2, 'UTF-8')) {
-        res.write("<br><a href='/multiply'>Multiply matrix</a>")
-        res.write("<br><a href='/add'>Add matrix</a>")
-    }
-
-    res.write("</body></html>")
-    res.end()
+    res.render('layout',  { title: 'Home', uploaded: checkUpload()})
 });
 
 // Upload page
 app.get('/upload-matrix', async (req, res) => {
     res.sendFile(path.resolve('./html/upload.html'), 'UTF-8')
+    res.render('upload',  { title: 'Upload', uploaded: checkUpload()})
 });
 
+// Error page       else {
+            
+        
 app.get('/process-callback', async (req, res) => {
-    /*
-        Checks uploaded matrix files are in the correct format:
-        1) Matrices must be square
-        2) Both matrices should have the same dimension
-        3) Both matrices should consist only of numbers
-
-        If these criteria are met, user redirected to homepage.
-        Otherwise an error page shows with a link to the matrix upload page.
-    */
-    if(calculator.validate(matrix1.toArray(), matrix2.toArray())){
-        res.redirect("/");
-    }
-    else {
-        fs.unlinkSync(path1, 'UTF-8')
-        fs.unlinkSync(path2, 'UTF-8') 
-        res.write("<!DOCTYPE html><html><body><h1>Error</h1>")
-        res.write("Please ensure you upload two matrices which have the same dimensions, are square, contain only numbers, and use ' ' as a seperator and /n for new lines <br>")
-        res.write("<a href='/upload-matrix'>Upload matrix</a>")
-        res.write("</body></html>")
-    }
+    res.render('error',  { title: 'Error', uploaded: false})
 });
 
 // Upload matrices
@@ -123,11 +119,40 @@ app.post('/process-upload-matrix', async (req, res) => {
                 message: 'No file uploaded'
             });
         } else {
+            string1 = req.files.matrix1.data.toString("UTF-8")
+            var array1 = lib.toArray(string1)
+            var redirect = "/process-callback"
+           
+            if(array1 != false){
+                string2 = req.files.matrix2.data.toString("UTF-8")
+                var array2 = lib.toArray(string2)
+                if(array2 != false){
+                    if (array1.length % 2 === 0  && array1.length == array2.length){
+                        if (fs.existsSync(path1, 'UTF-8')) {
+                            fs.unlinkSync(path1, 'UTF-8')
+                        }
+
+                        if (fs.existsSync(path2, 'UTF-8')) {
+                            fs.unlinkSync(path2, 'UTF-8')
+                        }
+                        console.log("Uploading")
+                        req.files.matrix1.mv(path1);
+                        req.files.matrix2.mv(path2);
+
+                        matrix1 = array1
+                        matrix2 = array2
+
+                        redirect = "/"
+                    }
+
+                } 
+
+            }
+
+            //matrix1.upload(req.files.matrix1)
+            //matrix2.upload(req.files.matrix2)
             
-            matrix1.upload(req.files.matrix1)
-            matrix2.upload(req.files.matrix2)
-        
-            res.redirect("/process-callback")
+            res.redirect(redirect)
             
         }
     } catch (err) {
@@ -137,29 +162,23 @@ app.post('/process-upload-matrix', async (req, res) => {
 
 });
 
-// Send add request
+// Send add request 1.283s for 1000x1000
 app.get('/add', async (req, res) => {
     /*
         Sends gRPC request to the addMatrices function.
 
         Returns: HTML of response
     */
+    console.time('codezup')
+    isUploaded = checkUpload()
     target = 'localhost:50051';
     var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
 
-    client.addMatrices({},function(err, response) {
+    client.addMatrices({array1:string1,array2:string2},function(err, response) {
       console.log("Received response")
-      console.log(response)
       if(response.message.length > 0){
-        html = "<!DOCTYPE html><html><body><h1>Matrix Addition</h1><body>"
-        html += lib.responseToHTML(response.message)
-        html += "</body></html"
-
-        fs.writeFile('./html/addition.html', html, function (err) {
-            if (err) throw err;
-            
-            res.sendFile(path.resolve('./html/addition.html'), 'UTF-8')
-        });
+        res.render('output',  { title: 'Add', uploaded: isUploaded, table:lib.responseToHTML(response.message)}) 
+        console.timeEnd('codezup')     
       } else {
         res.redirect("/process-callback")
       }
@@ -167,30 +186,23 @@ app.get('/add', async (req, res) => {
     });
 });
 
-// Send multiply request
+// Send multiply request - 14.718s for 1000x1000
 app.get('/multiply', async (req, res) => {
     /*
         Sends gRPC request to the multiplyMatrices function.
 
         Returns: HTML of response
     */
+    console.time('codezup')
+    isUploaded = checkUplomultiplyad()
     target = 'localhost:50051';
     var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
 
-    client.multiplyMatrices({},function(err, response) {
+    client.multiplyMatrices({array1:string1,array2:string2},function(err, response) {
       console.log("Received response")
-      console.log(response)
-      if(response.message.length > 0){
-
-        html = "<!DOCTYPE html><html><body><h1>Matrix Multiplication</h1><body>"
-        html += lib.responseToHTML(response.message)
-        html += "</body></html"
-        
-        fs.writeFile('./html/multiplication.html', html, function (err) {
-            if (err) throw err;
-        
-            res.sendFile(path.resolve('./html/multiplication.html'), 'UTF-8')
-        });
+      if(response.message.length > 0){ 
+        res.render('output',  { title: 'Multiply', uploaded: isUploaded, table:lib.responseToHTML(response.message)})
+        console.timeEnd('codezup')   
       } else {
         res.redirect("/process-callback")
       }

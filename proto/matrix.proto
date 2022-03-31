@@ -11,7 +11,8 @@ service Greeter {
 
 // The request message -- not used
 message Request {
-  string name = 1;
+  string array1 = 1;
+  string array2 = 2;
 }
 
 // The response message 
