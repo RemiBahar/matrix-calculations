@@ -1,10 +1,13 @@
 // Set-up express app
-
 const express = require('express');
+const bodyParser = require('body-parser');
 const fileUpload = require('express-fileupload');
 const path = require('path');
+const readline = require('readline');
+const math = require("mathjs")
 
 const app = express();
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // enable files upload
 /** This is a description of the foo function. */
@@ -15,6 +18,7 @@ app.use(fileUpload({
 // view engine setup
 //app.set('html', path.join(__dirname, 'html'));
 app.set('view engine', 'pug');
+app.use(express.json());
 
 // Compile the source code
 const port = process.env.PORT || 3000;
@@ -64,6 +68,8 @@ var matrix1 = false;
 var matrix2 = false;
 var string1 = false;
 var string2 = false;
+var footprint = false;
+var numBlockCalls = false;
 
 checkUpload = function(){
     returnVal = false
@@ -93,7 +99,6 @@ app.get('/', async (req, res) => {
 
 // Upload page
 app.get('/upload-matrix', async (req, res) => {
-    res.sendFile(path.resolve('./html/upload.html'), 'UTF-8')
     res.render('upload',  { title: 'Upload', uploaded: checkUpload()})
 });
 
@@ -162,14 +167,112 @@ app.post('/process-upload-matrix', async (req, res) => {
 
 });
 
-// Send add request 1.283s for 1000x1000
-app.get('/add', async (req, res) => {
+function subMatrix(matrix, n1, n2){
+    let i = 0
+    let j = 0
+    result = ""
+    while (i < n1){
+        row = matrix[i].split(" ")
+        
+        let addRow = ""
+        while(j < n2){
+            addRow += row[j] + " "
+            j++;
+        }
+        result += addRow.trim()
+        j = 0
+        result += "\n"
+
+        i++;
+    }
+    
+    return result.trim()
+       
+};
+
+
+app.get('/deadline/calculation/:calculation', async (req, res) => {
+    const n = 2
+    testMatrix1 = subMatrix(matrix1, n, n)
+    testMatrix2 = subMatrix(matrix2, n, n)
+    console.log("length:", matrix1.length)
+
+    var startTime = performance.now()
+
+    isUploaded = checkUpload()
+    target = 'localhost:50051';
+    var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
+ 
+    if (req.params["calculation"] == "add") {
+        client.multiplyMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
+            console.log("Received response")
+            if(response.message.length > 0){
+              var output = lib.responseToHTML(response.message)
+              var endTime = performance.now()
+              footprint = endTime - startTime
+              numBlockCalls = matrix1.length**2/n**2
+  
+              res.render('deadline',  
+                { title: 'Deadline', 
+                uploaded: checkUpload(), 
+                process: "<form action='/add' method='post'>", 
+                footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
+                numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
+                })
+            } 
+            
+          });
+        //console.log(footprint)
+      }
+    else if (req.params["calculation"] == "multiply") {
+        client.addMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
+            console.log("Received response")
+            if(response.message.length > 0){
+              var output = lib.responseToHTML(response.message)
+              var endTime = performance.now()
+              footprint = endTime - startTime
+              numBlockCalls = matrix1.length**2/n**2
+
+              res.render('deadline',  
+                { title: 'Deadline', 
+                uploaded: checkUpload(), 
+                process: "<form action='/multiply' method='post'>", 
+                footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
+                numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
+                })
+            } 
+            
+          });
+        
+        //console.log(footprint)
+    }
+    else {
+        res.render('error',  { title: 'Error', uploaded: checkUpload()})
+    }
+   
+
+});
+
+
+// Send add request 1.283s for 1000x1000, now 1.18s
+app.post('/add', async (req, res) => {
     /*
         Sends gRPC request to the addMatrices function.
 
         Returns: HTML of response
     */
-    console.time('codezup')
+    const deadline = req.body["deadline"]
+    var numServers = (numBlockCalls * footprint)/(deadline*1000)
+
+    if(numServers >= 7){
+        numServers = 8
+    } else {
+        numServers = math.ceil(numServers)
+    }
+
+    console.log("numServers", numServers)
+
+    console.time('Add time:')
     isUploaded = checkUpload()
     target = 'localhost:50051';
     var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
@@ -177,32 +280,91 @@ app.get('/add', async (req, res) => {
     client.addMatrices({array1:string1,array2:string2},function(err, response) {
       console.log("Received response")
       if(response.message.length > 0){
-        res.render('output',  { title: 'Add', uploaded: isUploaded, table:lib.responseToHTML(response.message)}) 
-        console.timeEnd('codezup')     
+        const output = lib.responseToHTML(response.message)
+        /*
+        fs.writeFile('./views/addition.html', output, function (err) {
+            if (err) throw err;
+            
+            res.sendFile(path.resolve('./views/addition.html'), 'UTF-8')
+        });*/
+        res.render('output',  { title: 'Add', uploaded: isUploaded, table:output}) 
+        console.timeEnd('Add time:')     
       } else {
         res.redirect("/process-callback")
       }
-
+      
     });
 });
 
-// Send multiply request - 14.718s for 1000x1000
-app.get('/multiply', async (req, res) => {
+function convertString(){
+    // Create read interface
+    const readInterface = readline.createInterface({
+        input: fs.createReadStream(path1),
+        output: process.stdout,
+        console: false
+    });
+
+    let i =0
+    var returnString = ""
+
+    readInterface.on("line", (line) => foo(line, ++i))
+    const foo = (line, i) => {
+        if (i < 2){
+            var array = line.split(" ").slice(0, 2);; //O(N)
+            returnString += array[0]
+            returnString += array[1]
+            returnString += "\n"   
+        }
+        else {
+            readInterface.close();
+
+        }
+      }
+    console.log(returnString)
+    return returnString
+    //console.log("4by4string", footprintString1)
+    
+};*/
+
+    
+// Send multiply request - 14.718s for 1000x1000. 13.760s without templating. 12.931s with console.log
+app.post('/multiply', async (req, res) => {
     /*
         Sends gRPC request to the multiplyMatrices function.
-
+params
         Returns: HTML of response
     */
-    console.time('codezup')
-    isUploaded = checkUplomultiplyad()
+    const deadline = req.body["deadline"]
+    var numServers = (numBlockCalls * footprint)/(deadline*1000)
+
+    if(numServers >= 7){
+        numServers = 8
+    } else {
+        numServers = math.ceil(numServers)
+    }
+
+    console.log("numServers", numServers)
+    //console.log("4by4", string1)
+    //console.log("hello", convertString())
+    console.log("footprint", footprint)
+    console.time('Multiplication time:')
+    isUploaded = checkUpload()
     target = 'localhost:50051';
     var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
-
+   
     client.multiplyMatrices({array1:string1,array2:string2},function(err, response) {
       console.log("Received response")
+
       if(response.message.length > 0){ 
-        res.render('output',  { title: 'Multiply', uploaded: isUploaded, table:lib.responseToHTML(response.message)})
-        console.timeEnd('codezup')   
+        const output = lib.responseToHTML(response.message)
+        /*
+        fs.writeFile('./views/addition.html', output, function (err) {
+            if (err) throw err;
+            
+            res.sendFile(path.resolve('./views/addition.html'), 'UTF-8')
+        });*/
+        res.render('output',  { title: 'Multiply', uploaded: isUploaded, table:output})
+        console.timeEnd('Multiplication time:')  
       } else {
         res.redirect("/process-callback")
       }

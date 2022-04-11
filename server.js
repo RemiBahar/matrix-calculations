@@ -67,6 +67,7 @@ function addMatrices(call, callback) {
 function multiplyMatrices(call, callback) {
     var matrix1 = serverToArray(call.request.array1)
     var matrix2 = serverToArray(call.request.array2)
+    //console.log(matrix1, matrix2)
     const N = matrix1.length //O(1)
     var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
 

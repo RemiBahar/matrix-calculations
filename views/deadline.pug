@@ -1,0 +1,23 @@
+extends layout.pug
+block content
+    if uploaded
+        p Please enter a deadline in seconds for how long you want the matrix calculation to be. 
+        p A maximum of 8 servers are used so depending on the size of the matrices the deadline may be exceeded
+            div !{process}
+                div !{footprint}
+                div !{numBlockCalls}
+                div 
+                    b 
+                        label(for="deadline") Deadline
+                            input(type="number" id="deadline" oninput="calculateServers()" name="deadline" min="1" required)
+                div 
+                    label(for="numServers") Number of servers needed 
+                        input(type="text" id="numServers" disabled)
+                script(type="text/javascript").
+                    function calculateServers() {
+                    var x = (document.getElementById("numBlockCalls").value * document.getElementById("footprint").value)/(document.getElementById("deadline").value*1000);
+                    document.getElementById("numServers").value = x;
+                    }
+
+
+                input(type="submit" value="Submit")

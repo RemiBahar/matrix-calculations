@@ -1,5 +1,6 @@
 const fs = require("fs"); // Or `import fs from "fs";` with ESM
 
+
 exports.toArray = function(string){
     var rows = string.split("\n")
     matrix = []
