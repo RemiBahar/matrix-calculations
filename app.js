@@ -63,6 +63,7 @@ const path2 = path.resolve('./uploads/matrix2.txt')
 
 // Extra functions
 const lib = require('./lib');
+const { matrix } = require('mathjs');
 
 var matrix1 = false;
 var matrix2 = false;
@@ -86,6 +87,56 @@ checkUpload = function(){
 
     
 }
+
+function createScalingMatrix(matrix, n){
+    /*
+        Divides a list of matrix rows amongst n sub-lists. 
+        Used to split calculation of matrix multiplication amongst n nodes.
+        
+        Parameters:
+            matrix [[char]] - List of matrix rows where each row is a string of elements, e.g. "1 4"
+            n int - Number of sub-lists
+
+        Returns: 
+            subMatrix [[char]] - 2D array containing n sub-lists where each sub-list is part of the larger matrix 
+    */
+    maxRows = math.floor(matrix1.length/n)
+    let noRows = maxRows
+    let i = 0
+    let j = 0
+    result = ""
+    let curString = ""
+    let curRows = 1
+    let matrixNo = 0
+ 
+    scalingMatrix = Array.from(Array(n).keys())
+    // Loop through file
+    while (i < matrix1.length){
+        
+        curString += matrix1[i]
+        curString += "\n"
+        //console.log("matrixNo", matrixNo, curRows, noRows)
+
+        // Add remainder rows to last matrix
+        if(matrixNo == (n-1) && noRows == maxRows){
+            let remainder = matrix1.length - (noRows * n)
+            noRows += remainder
+        }
+
+        // Append noRows rows to each matrix
+        if(curRows == noRows){
+            scalingMatrix[matrixNo] = curString
+            curString = ""
+            curRows = 0
+            matrixNo++;
+        }
+        
+        curRows++;
+        i++;
+    }
+
+    return scalingMatrix
+}
 // Home page
 app.get('/', async (req, res) => {
     /*
@@ -94,7 +145,26 @@ app.get('/', async (req, res) => {
 
         Multiply and Add links are shown if matrices have been uploaded
     */
-    res.render('layout',  { title: 'Home', uploaded: checkUpload()})
+   /*
+    let scalingMatrix = createScalingMatrix(matrix1, 3)
+    let output = ""
+    for(curString in scalingMatrix){
+        target = 'localhost:50051';
+        var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
+    
+        client.multiplyMatrices({array1:curString,array2:string2},function(err, response) {
+            console.log("Received response")
+            console.log(response.message)
+            if(response.message.length > 0){ 
+                output += response.message
+            } else {
+                res.redirect("/process-callback")
+            }
+        });
+    }
+    console.log(output)
+    */
+    res.render('index',  { title: 'Home', uploaded: checkUpload()})
 });
 
 // Upload page
@@ -107,6 +177,10 @@ app.get('/upload-matrix', async (req, res) => {
         
 app.get('/process-callback', async (req, res) => {
     res.render('error',  { title: 'Error', uploaded: false})
+});
+
+app.get('/scaling', async (req, res) => {
+   
 });
 
 // Upload matrices
@@ -324,7 +398,7 @@ function convertString(){
     return returnString
     //console.log("4by4string", footprintString1)
     
-};*/
+};
 
     
 // Send multiply request - 14.718s for 1000x1000. 13.760s without templating. 12.931s with console.log

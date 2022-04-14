@@ -1,0 +1,29 @@
+extends layout.pug
+block content
+   p Built using NodeJS and hosted on GCE. Front-end uses pug for templating.
+   table(style="width: 100%;text-align:left;")
+    tr 
+        th UI route 
+        th API route 
+        th Description 
+    tr 
+        td Home link
+        td /
+        td Homepage
+    tr
+        td Upload link
+        td /upload
+        td Allows users to upload matrices as files. Handles checking and uploading of files.
+    tr 
+        td Add link
+        td /add
+        td Add together two matrices 
+    tr 
+        td Multiply link
+        td /multiply
+        td Multiply together two matrices 
+    tr 
+        td Deadline page 
+        td /deadline/:deadline
+        td Allows user to enter desired calculation time 
+    
