@@ -64,15 +64,15 @@ function addMatrices(call, callback) {
   }
 
   // Perform matrix multiplication
-function multiplyMatrices(call, callback) {
+ function multiplyMatrices(call, callback) {
     var matrix1 = serverToArray(call.request.array1)
     var matrix2 = serverToArray(call.request.array2)
-
-    console.log("Matrix1", matrix1)
+    console.log("String2", call.request.array2)
+    //console.log("Matrix1", matrix1)
     console.log("Matrix2", matrix2)
     const N = matrix1.length //O(1)
     var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
-
+  
     //O(4n^3)
     for (var i = 0; i < N; i++)
         {
@@ -87,6 +87,7 @@ function multiplyMatrices(call, callback) {
         }
     
       proto_result = lib.toMessage(result)
+      console.log("Result", result)
       callback(null, proto_result);
   
       return proto_result

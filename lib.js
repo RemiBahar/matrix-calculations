@@ -1,4 +1,6 @@
 const fs = require("fs"); // Or `import fs from "fs";` with ESM
+const { result } = require("lodash");
+const math = require("mathjs") 
 
 
 exports.toArray = function(string){
@@ -41,6 +43,7 @@ exports.responseToHTML = function(x){
     /*
         Converts gRPC response
     */
+    
     output = "<table>"
     for (i = 0; i < x.length; i++){
         output += "<tr>"
@@ -60,4 +63,82 @@ exports.toMessage = function(array){
         return_message.push({items:array[i]})
     }
     return {message:return_message}
+}
+
+exports.createResultMatrix = function(noNodes, matrix2){
+
+    const N = matrix2.length
+    const maxRows = math.floor(N/noNodes)
+    const remainder = N - (noNodes * maxRows)
+    const remainderRows = maxRows + remainder
+    //console.log("N", N, "maxRows", "noNodes", noNodes, "remainder", remainder,  "maxRows", maxRows, "remainderRows", remainderRows)
+    
+    //let result = Array.from(Array(noNodes).keys())
+    /*
+    let stringNo = 1
+    let noElems = 1
+    let curString = ""
+    console.log("noNodes", noNodes)
+
+    for (i = 0; i < N; i++) {
+        var array = matrix2[i].split(" "); //O(N)
+        
+        stringNo = 1
+        noElems = 1
+        curString = ""
+        for (j = 0; j < N; j++){
+            
+            curString += array[j] + " "
+            console.log(array[j], noElems)
+            if((stringNo != (noNodes - 1) && noElems == maxRows) || (stringNo == (noNodes -1) && noElems == remainderRows)){
+                console.log("curString", curString, "stringNo", stringNo)
+                result[stringNo] += curString.trim()
+                result[stringNo] += "\n"
+                
+                curString = ""
+                noElems = 1
+                stringNo ++;
+            }
+            noElems ++;
+
+        }
+
+    }
+    */
+
+    let result =Array(noNodes).fill('')
+    
+    console.log("initial", result.length)
+    for (i = 0; i < N; i++) {
+        var array = matrix2[i].split(" "); //O(N)
+        var noElems = 1
+        let addResult = ""
+        var stringNo = 0
+        for (j = 0; j < N; j++){
+            //console.log(array[j], noElems==maxRows)
+            addResult += array[j]
+            if((stringNo < (noNodes -1) && noElems == maxRows) || (stringNo == (noNodes -1) && noElems == remainderRows)){
+                if(i < (N-1)){
+                    addResult += "\n"
+                }
+                //console.log(result)
+                result[stringNo] += addResult
+                console.log(result)
+
+                addResult = ""
+                noElems = 1
+                stringNo ++;
+
+            } 
+            else {
+                addResult += " "
+                noElems ++;
+            }
+            
+        }
+
+        
+    }
+
+    return result
 }

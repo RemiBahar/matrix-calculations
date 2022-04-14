@@ -88,55 +88,18 @@ checkUpload = function(){
     
 }
 
-function createScalingMatrix(matrix, n){
-    /*
-        Divides a list of matrix rows amongst n sub-lists. 
-        Used to split calculation of matrix multiplication amongst n nodes.
+function testFunction(subString2) {
+    client.multiplyMatrices({array1:string1,array2:subString2},function(err, response) {
+        console.log("Received response")
         
-        Parameters:
-            matrix [[char]] - List of matrix rows where each row is a string of elements, e.g. "1 4"
-            n int - Number of sub-lists
-
-        Returns: 
-            subMatrix [[char]] - 2D array containing n sub-lists where each sub-list is part of the larger matrix 
-    */
-    maxRows = math.floor(matrix1.length/n)
-    let noRows = maxRows
-    let i = 0
-    let j = 0
-    result = ""
-    let curString = ""
-    let curRows = 1
-    let matrixNo = 0
- 
-    scalingMatrix = Array.from(Array(n).keys())
-    // Loop through file
-    while (i < matrix1.length){
-        
-        curString += matrix1[i]
-        curString += "\n"
-        //console.log("matrixNo", matrixNo, curRows, noRows)
-
-        // Add remainder rows to last matrix
-        if(matrixNo == (n-1) && noRows == maxRows){
-            let remainder = matrix1.length - (noRows * n)
-            noRows += remainder
-        }
-
-        // Append noRows rows to each matrix
-        if(curRows == noRows){
-            scalingMatrix[matrixNo] = curString
-            curString = ""
-            curRows = 0
-            matrixNo++;
-        }
-        
-        curRows++;
-        i++;
-    }
-
-    return scalingMatrix
+        if(response.message.length > 0){ 
+          const output = response.message
+          console.log("Output", output)
+        } 
+      });
 }
+
+
 // Home page
 app.get('/', async (req, res) => {
     /*
@@ -145,25 +108,10 @@ app.get('/', async (req, res) => {
 
         Multiply and Add links are shown if matrices have been uploaded
     */
-   /*
-    let scalingMatrix = createScalingMatrix(matrix1, 3)
-    let output = ""
-    for(curString in scalingMatrix){
-        target = 'localhost:50051';
-        var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
-    
-        client.multiplyMatrices({array1:curString,array2:string2},function(err, response) {
-            console.log("Received response")
-            console.log(response.message)
-            if(response.message.length > 0){ 
-                output += response.message
-            } else {
-                res.redirect("/process-callback")
-            }
-        });
-    }
-    console.log(output)
-    */
+    resultMatrix = lib.createResultMatrix(3, matrix2)
+
+    result = resultMatrix.map(testFunction)
+  
     res.render('index',  { title: 'Home', uploaded: checkUpload()})
 });
 
@@ -280,7 +228,10 @@ app.get('/deadline/calculation/:calculation', async (req, res) => {
     if (req.params["calculation"] == "add") {
         client.multiplyMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
             console.log("Received response")
+            
             if(response.message.length > 0){
+            
+              
               var output = lib.responseToHTML(response.message)
               var endTime = performance.now()
               footprint = endTime - startTime

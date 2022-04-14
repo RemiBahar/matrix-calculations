@@ -1,0 +1,6 @@
+
+function updateResult(response) {
+    for (i = 0; i < response.length; i++) {
+        result[i].push(col.items)
+    }
+}
