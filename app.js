@@ -72,6 +72,11 @@ var string2 = false;
 var footprint = false;
 var numBlockCalls = false;
 
+
+string1 = fs.readFileSync(path1).toString("UTF-8")
+matrix1 = string1.split("\n")
+string2 = fs.readFileSync(path2).toString("UTF-8")
+matrix2 = string2.split("\n")
 checkUpload = function(){
     returnVal = false
     if (fs.existsSync(path1, 'UTF-8') && fs.existsSync(path2, 'UTF-8')) {
@@ -87,8 +92,32 @@ checkUpload = function(){
 
     
 }
+function serverToArray(_string){
+    var rows = _string.split("\n")
+    var matrix = []
+   
+    //O(N^2)
+    //var rows = file.toString().split("\n"); //O(3N^2)
+    var rows = _string.split("\n");
+  
+    for (i in rows){
+        var array = rows[i].split(" "); //O(N)
+  
+        row =[] 
+        for (x in array){
+          n = Number(array[x])
+          row.push(Number(array[x])) //O(1)
+        }
+        matrix.push(row) //O(1)
+  
+    }
+  
+    return matrix
+     
+  }
 
 function testFunction(subString2) {
+
     client.multiplyMatrices({array1:string1,array2:subString2},function(err, response) {
         console.log("Received response")
         
@@ -97,6 +126,7 @@ function testFunction(subString2) {
           console.log("Output", output)
         } 
       });
+    
 }
 
 
@@ -108,9 +138,9 @@ app.get('/', async (req, res) => {
 
         Multiply and Add links are shown if matrices have been uploaded
     */
-    resultMatrix = lib.createResultMatrix(3, matrix2)
-
-    result = resultMatrix.map(testFunction)
+    resultMatrix = lib.createResultMatrix(3, matrix2).map(testFunction)
+   
+    //result = resultMatrix.map(testFunction)
   
     res.render('index',  { title: 'Home', uploaded: checkUpload()})
 });

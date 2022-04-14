@@ -41,6 +41,29 @@ function serverToArray(string){
   return matrix
    
 }
+
+function toList(string){
+  var rows = string.split("\n")
+  matrix = []
+  
+  //O(N^2)
+  for (i in rows){
+      var array = rows[i].split(" "); //O(N)
+      
+      row =[] 
+      
+      for (x in array){ 
+          row.push(Number(array[x])) //O(1)
+      }
+
+      matrix.push(row) //O(1)
+  }
+  //console.log("matrix:", matrix)
+  return matrix
+   
+  
+}
+
 // Perform matrix addition
 function addMatrices(call, callback) {
     /*
@@ -65,27 +88,33 @@ function addMatrices(call, callback) {
 
   // Perform matrix multiplication
  function multiplyMatrices(call, callback) {
-    var matrix1 = serverToArray(call.request.array1)
-    var matrix2 = serverToArray(call.request.array2)
-    console.log("String2", call.request.array2)
-    //console.log("Matrix1", matrix1)
-    console.log("Matrix2", matrix2)
-    const N = matrix1.length //O(1)
-    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
-  
-    //O(4n^3)
+    var _matrix1 = toList(call.request.array1)
+    var _matrix2 = toList(call.request.array2)
+    N = _matrix1.length
+    M = _matrix2.length
+    P = _matrix2[0].length
+
+    var result =  Array(N).fill().map(() => Array(P)); //O(n^2)
+
     for (var i = 0; i < N; i++)
         {
-            for (var j = 0; j < N; j++)
+            for (var j = 0; j < P; j++)
             {
                 result[i][j] = 0;
-                for (var k = 0; k < N; k++)
+                for (var k = 0; k < M; k++)
                 {
-                    result[i][j] += matrix1[i][k]*matrix2[k][j]; //O(4)
+                    result[i][j] += _matrix1[i][k]*_matrix2[k][j]; //O(4)
                 }
             }
         }
-    
+      /*
+      for (var i = 0; i < N; i++){
+        for (var j = 0; j < N; j++){
+          console.log(matrix1[i][k], matrix2[k][j])
+        }
+
+      }
+      */
       proto_result = lib.toMessage(result)
       console.log("Result", result)
       callback(null, proto_result);

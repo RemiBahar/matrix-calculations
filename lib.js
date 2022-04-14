@@ -39,6 +39,29 @@ exports.toArray = function(string){
      
 }
 
+exports.toList = function(string){
+    var rows = string.split("\n")
+    matrix = []
+    
+    //O(N^2)
+    for (i in rows){
+        var array = rows[i].split(" "); //O(N)
+        
+        row =[] 
+        
+        for (x in array){ 
+            row.push(Number(array[x])) //O(1)
+        }
+
+        matrix.push(row) //O(1)
+    }
+    //console.log("matrix:", matrix)
+    return matrix
+     
+    
+}
+
+
 exports.responseToHTML = function(x){
     /*
         Converts gRPC response
