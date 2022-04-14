@@ -1,4 +1,5 @@
 # matrix-calculations
+## Set-up
 
 ## Accessing the project as a client
 1. Visit http://34.142.12.178/
