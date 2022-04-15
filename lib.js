@@ -102,31 +102,21 @@ exports.responseToString = function(x, counter){
         }
     }*/
     global.resultTest[counter] = output
-   
-    
-    console.log("global mf", global.resultTest)
+    global.operationsRun ++;
+    console.log("Operations run", global.operationsRun);
+    if(global.operationsRun == 3){
+	    output = ""
+	    for(i=0; i < x.length; i++){
+		    output = ""
+		    for (j = 0; j < global.resultTest.length; j++){
+			    output += global.resultTest[j][i] 
+		    }
+		    output += "\n"
+	    }
+	    console.log("global mf", output);
+    } 
 }
 
-exports.responseToFile = function(x, filename){
-    output = ""
-    for (i = 0; i < x.length; i++){
-        addRow = ""
-        for (j = 0; j < x[i].items.length; j++){
-            addRow += x[i].items[j] + " "
-        }
-        output += addRow.trim()
-        output += "\n"
-    }
-    fileString = fs.readFileSync(filename).toString("UTF-8")
-    console.log("fileString", fileString)
-    fs.writeFile(filename, output, err => {
-        if (err) {
-          console.error(err)
-          return
-        }
-        //file written successfully
-      })
-}
 
 exports.toMessage = function(array){
     return_message = []
@@ -179,7 +169,7 @@ exports.createResultMatrix = function(noNodes, matrix2){
 
     let result =Array(noNodes).fill('')
     
-    console.log("initial", result.length)
+    //console.log("initial", result.length)
     for (i = 0; i < N; i++) {
         var array = matrix2[i].split(" "); //O(N)
         var noElems = 1
@@ -194,7 +184,7 @@ exports.createResultMatrix = function(noNodes, matrix2){
                 }
                 //console.log(result)
                 result[stringNo] += addResult
-                console.log(result)
+                //console.log(result)
 
                 addResult = ""
                 noElems = 1

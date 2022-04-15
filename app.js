@@ -15,6 +15,7 @@ app.use(fileUpload({
     createParentPath: true
 }));
 global.resultTest = ""
+global.operationsRun = 0
 // view engine setup
 //app.set('html', path.join(__dirname, 'html'));
 app.set('view engine', 'pug');
@@ -44,7 +45,7 @@ var packageDefinition = protoLoader.loadSync(
     });
 var matrixProto = grpc.loadPackageDefinition(packageDefinition).matrix;
 
-targetArray = ['10.154.0.7:50051','10.154.0.6:50051'];
+targetArray = ['10.154.0.8:50051','10.154.0.7:50051','10.154.0.6:50051'];
 var client = new matrixProto.Greeter(targetArray[0],grpc.credentials.createInsecure());
 
 // Define application structure
@@ -117,12 +118,12 @@ function serverToArray(_string){
      
   }
 
-function testFunction(matrixArray, i) {
+function scaleMultiplication(matrixArray, i) {
     var client = new matrixProto.Greeter(targetArray[i], grpc.credentials.createInsecure());
     client.multiplyMatrices({array1:string1,array2:matrixArray[i]},function(err, response) {
         console.log("Received response")
-        
-        if(response.message.length > 0){ 
+	
+        if(response.message.length > 0){	
           const output = lib.responseToString(response.message, i)
               
         } 
@@ -131,9 +132,8 @@ function testFunction(matrixArray, i) {
     // Should be asynchronously run
     console.log("test asynchronous", i)
     if(i < (matrixArray.length - 1)){
-        testFunction(matrixArray, i+1)
+        scaleMultiplication(matrixArray, i+1)
       }
-    
 }
 
 
@@ -145,12 +145,6 @@ app.get('/', async (req, res) => {
 
         Multiply and Add links are shown if matrices have been uploaded
     */
-    global.resultTest = Array.from(2)
-    scalingMatrix = lib.createResultMatrix(2, matrix2)
-    testFunction(scalingMatrix, 0)
-    //result = resultMatrix.map(testFunction)
-    console.log("test", test)
-  
     res.render('index',  { title: 'Home', uploaded: checkUpload()})
 });
 
@@ -265,6 +259,7 @@ app.get('/deadline/calculation/:calculation', async (req, res) => {
     var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
  
     if (req.params["calculation"] == "add") {
+	var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure());
         client.multiplyMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
             console.log("Received response")
             
@@ -289,7 +284,8 @@ app.get('/deadline/calculation/:calculation', async (req, res) => {
         //console.log(footprint)
       }
     else if (req.params["calculation"] == "multiply") {
-        client.addMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
+          var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure()); 		
+	  client.addMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
             console.log("Received response")
             if(response.message.length > 0){
               var output = lib.responseToHTML(response.message)
@@ -354,10 +350,9 @@ app.post('/add', async (req, res) => {
         console.timeEnd('Add time:')     
       } else {
         res.redirect("/process-callback")
-      }
-      
+      } 
     });
-});
+});	
 
 function convertString(){
     // Create read interface
@@ -412,23 +407,8 @@ params
     console.log("footprint", footprint)
     console.time('Multiplication time:')
     isUploaded = checkUpload()
-    var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure());
+    global.resultTest = Array.from(3)
+    scalingMatrix = lib.createResultMatrix(3, matrix2)
+    scaleMultiplication(scalingMatrix, 0)	
    
-    client.multiplyMatrices({array1:string1,array2:string2},function(err, response) {
-      console.log("Received response")
-
-      if(response.message.length > 0){ 
-        const output = lib.responseToHTML(response.message)
-        /*
-        fs.writeFile('./views/addition.html', output, function (err) {
-            if (err) throw err;
-            
-            res.sendFile(path.resolve('./views/addition.html'), 'UTF-8')
-        });*/
-        res.render('output',  { title: 'Multiply', uploaded: isUploaded, table:output})
-        console.timeEnd('Multiplication time:')  
-      } else {
-        res.redirect("/process-callback")
-      }
-    });
 });
