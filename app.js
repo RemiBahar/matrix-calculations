@@ -124,14 +124,15 @@ function testFunction(matrixArray, i) {
         
         if(response.message.length > 0){ 
           const output = lib.responseToString(response.message, i)
-          if(i < (matrixArray.length - 1)){
-            testFunction(matrixArray, i+1)
-          }
-          
-          
-          
+              
         } 
       });
+
+    // Should be asynchronously run
+    console.log("test asynchronous", i)
+    if(i < (matrixArray.length - 1)){
+        testFunction(matrixArray, i+1)
+      }
     
 }
 

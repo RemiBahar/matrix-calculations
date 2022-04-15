@@ -7,7 +7,10 @@
 ## Copying the project to your own server
 
 Install Node
-1. From home directory run: curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
+1. From home directory run:
+```bash
+ curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
+ ```
 2. Run script: sudo bash nodesource_setup.sh
 3. sudo apt-get install nodejs
 4. sudo apt-get install build-essential
