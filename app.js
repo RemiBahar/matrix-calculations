@@ -124,13 +124,26 @@ function scaleMultiplication(matrixArray, i) {
     client.multiplyMatrices({array1:string1,array2:matrixArray[i]},function(err, response) {
         console.log("Received response")
 	
-        if(response.message.length > 0){	
-          lib.responseToString({response:response.message, counter:i}, function(err, response){
-            if(response.result.length > 0){
-                console.log("All done mf")
-                //res.render('index',  { title: 'Home', uploaded: checkUpload()})
+        if(response.message.length > 0){
+            x = response.message
+            counter = i
+            
+            output = []
+            for (i = 0; i < x.length; i++){
+                addRow = ""
+                for (j = 0; j < x[i].items.length; j++){
+                    addRow += x[i].items[j] + " "
+                }
+                output.push(addRow.trim())
             }
-          });
+            
+            global.resultTest[counter] = output
+            global.operationsRun ++;
+            console.log("test", global.operationsRun)
+            if(global.operationsRun == global.resultTest.length){
+                console.log("global mf", global.resultTest)
+                console.log("All done mf")
+            }  	
               
         } 
       });
