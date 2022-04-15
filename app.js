@@ -128,6 +128,7 @@ function scaleMultiplication(matrixArray, i) {
           lib.responseToString({response:response.message, counter:i}, function(err, response){
             if(response.result.length > 0){
                 console.log("All done mf")
+                //res.render('index',  { title: 'Home', uploaded: checkUpload()})
             }
           });
               
@@ -136,10 +137,33 @@ function scaleMultiplication(matrixArray, i) {
 
     // Should be asynchronously run
     console.log("test asynchronous", i)
-    if(i < (matrixArray.length - 1)){
-        scaleMultiplication(matrixArray, i+1)
-      }
 }
+
+function scaleMultiplicationOld(call, callback) {
+    matrixArray = call.array
+    i = call.counter
+    var client = new matrixProto.Greeter(targetArray[i], grpc.credentials.createInsecure());
+    client.multiplyMatrices({array1:string1,array2:matrixArray[i]},function(err, response) {
+        console.log("Received response")
+	
+        if(response.message.length > 0){	
+          lib.responseToString({response:response.message, counter:i}, function(err, response){
+            console.log("Wrote response")
+            if(response.result.length > 0){
+                console.log("All done mf")
+                callback(null, {result:global.resultTest})
+                //res.render('index',  { title: 'Home', uploaded: checkUpload()})
+            }
+          });
+              
+        } 
+      });
+
+    // Should be asynchronously run
+    console.log("test asynchronous", i)
+}
+
+
 
 function multiplyLoop(call, callback) {
     matrixArray = call.array
@@ -458,6 +482,16 @@ params
             console.log("All done mffff!")
         }
     });*/
-    scaleMultiplication(scalingMatrix, 0)	
+    for(i=0; i < numServers; i++){
+        scaleMultiplication(scalingMatrix, i)
+        /*
+        scaleMultiplication({array:scalingMatrix, counter:i},function(error, response){
+            if(response.result.length > 0){
+                console.log("All done mf")
+            }
+        });*/
+        console.log("synchronous", i)	
+    }
+    
    
 });
