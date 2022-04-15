@@ -95,7 +95,7 @@ node app.js
 
 ## Set up server(s)
 
-For each server
+For each server/node
 
 Install Node
 1. From home directory, install Node:
