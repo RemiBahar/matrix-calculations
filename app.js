@@ -44,8 +44,8 @@ var packageDefinition = protoLoader.loadSync(
     });
 var matrixProto = grpc.loadPackageDefinition(packageDefinition).matrix;
 
-target = 'localhost:50051';
-var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
+targetArray = ['10.154.0.7:50051','10.154.0.6:50051'];
+var client = new matrixProto.Greeter(targetArray[0],grpc.credentials.createInsecure());
 
 // Define application structure
 
@@ -118,7 +118,7 @@ function serverToArray(_string){
   }
 
 function testFunction(matrixArray, i) {
-    
+    var client = new matrixProto.Greeter(targetArray[i], grpc.credentials.createInsecure());
     client.multiplyMatrices({array1:string1,array2:matrixArray[i]},function(err, response) {
         console.log("Received response")
         
@@ -145,8 +145,8 @@ app.get('/', async (req, res) => {
 
         Multiply and Add links are shown if matrices have been uploaded
     */
-    global.resultTest = Array.from(3)
-    scalingMatrix = lib.createResultMatrix(3, matrix2)
+    global.resultTest = Array.from(2)
+    scalingMatrix = lib.createResultMatrix(2, matrix2)
     testFunction(scalingMatrix, 0)
     //result = resultMatrix.map(testFunction)
     console.log("test", test)
@@ -154,7 +154,7 @@ app.get('/', async (req, res) => {
     res.render('index',  { title: 'Home', uploaded: checkUpload()})
 });
 
-// Upload page
+// Uplgad page
 app.get('/upload-matrix', async (req, res) => {
     res.render('upload',  { title: 'Upload', uploaded: checkUpload()})
 });
@@ -278,7 +278,7 @@ app.get('/deadline/calculation/:calculation', async (req, res) => {
   
               res.render('deadline',  
                 { title: 'Deadline', 
-                uploaded: checkUpload(), 
+                uplgaded: checkUpload(), 
                 process: "<form action='/add' method='post'>", 
                 footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
                 numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
@@ -338,8 +338,7 @@ app.post('/add', async (req, res) => {
 
     console.time('Add time:')
     isUploaded = checkUpload()
-    target = 'localhost:50051';
-    var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
+    var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure());
 
     client.addMatrices({array1:string1,array2:string2},function(err, response) {
       console.log("Received response")
@@ -413,8 +412,7 @@ params
     console.log("footprint", footprint)
     console.time('Multiplication time:')
     isUploaded = checkUpload()
-    target = 'localhost:50051';
-    var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
+    var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure());
    
     client.multiplyMatrices({array1:string1,array2:string2},function(err, response) {
       console.log("Received response")

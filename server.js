@@ -88,12 +88,13 @@ function addMatrices(call, callback) {
 
   // Perform matrix multiplication
  function multiplyMatrices(call, callback) {
+    console.log("Performing Multiplication")
     var _matrix1 = toList(call.request.array1)
     var _matrix2 = toList(call.request.array2)
     N = _matrix1.length
     M = _matrix2.length
     P = _matrix2[0].length
-
+   
     var result =  Array(N).fill().map(() => Array(P)); //O(n^2)
 
     for (var i = 0; i < N; i++)
