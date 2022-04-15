@@ -144,6 +144,7 @@ app.get('/', async (req, res) => {
 
         Multiply and Add links are shown if matrices have been uploaded
     */
+    global.resultTest = Array.from(3)
     scalingMatrix = lib.createResultMatrix(3, matrix2)
     testFunction(scalingMatrix, 0)
     //result = resultMatrix.map(testFunction)

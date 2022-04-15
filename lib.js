@@ -91,16 +91,17 @@ exports.responseToString = function(x, counter){
         for (j = 0; j < x[i].items.length; j++){
             addRow += x[i].items[j] + " "
         }
-        output.push(addRow)
+        output.push(addRow.trim())
     }
-
+    /*
     if(counter == 0){
         global.resultTest = output
     } else {
         for (i=0; i< x.length; i++){
-            global.resultTest[i] += output[i]
+            global.resultTest += output[[i]
         }
-    }
+    }*/
+    global.resultTest[counter] = output
    
     
     console.log("global mf", global.resultTest)
