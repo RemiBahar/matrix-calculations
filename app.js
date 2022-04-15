@@ -118,7 +118,8 @@ function serverToArray(_string){
   }
 
 function testFunction(matrixArray, i) {
-    
+    target = "35.197.193.61:50051"
+    var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
     client.multiplyMatrices({array1:string1,array2:matrixArray[i]},function(err, response) {
         console.log("Received response")
         
