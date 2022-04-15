@@ -94,3 +94,51 @@ node app.js
 8. Finally: visit ip address in browser, the app's homepage should now be shown
 
 ## Set up server(s)
+
+For each server
+
+Install Node
+1. From home directory, install Node:
+```bash
+ cd ~
+ curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
+ sudo bash nodesource_setup.sh
+ ```
+
+ ```bash
+ sudo apt-get install nodejs
+ ```
+
+ ```bash
+ sudo apt-get install build-essential
+ ```
+2. Verify installation
+```bash
+node -v
+```
+
+```bash
+npm -v
+```
+
+Clone project
+1. Run:
+```bash
+cd ~
+git clone https://github.com/RemiBahar/matrix-calculations.git
+```
+
+Install Nginx
+1. Run:
+```bash
+sudo apt-get update
+sudo apt-get install nginx
+```
+
+Run server.js
+1. Run:
+```bash
+cd ~
+cd matrix-calculations
+node server.js
+```
