@@ -45,7 +45,8 @@ var packageDefinition = protoLoader.loadSync(
     });
 var matrixProto = grpc.loadPackageDefinition(packageDefinition).matrix;
 
-targetArray = ['10.154.0.8:50051','10.154.0.7:50051','10.154.0.6:50051'];
+//targetArray = ['10.154.0.8:50051','10.154.0.7:50051','10.154.0.6:50051'];
+targetArray = ["localhost:50051", "localhost:50051", "localhost:50051", "localhost:50051", "localhost:50051", "localhost:50051", "localhost:50051", "localhost:50051"]
 var client = new matrixProto.Greeter(targetArray[0],grpc.credentials.createInsecure());
 
 // Define application structure
@@ -124,7 +125,11 @@ function scaleMultiplication(matrixArray, i) {
         console.log("Received response")
 	
         if(response.message.length > 0){	
-          const output = lib.responseToString(response.message, i)
+          lib.responseToString({response:response.message, counter:i}, function(err, response){
+            if(response.result.length > 0){
+                console.log("All done mf")
+            }
+          });
               
         } 
       });
@@ -134,6 +139,44 @@ function scaleMultiplication(matrixArray, i) {
     if(i < (matrixArray.length - 1)){
         scaleMultiplication(matrixArray, i+1)
       }
+}
+
+function multiplyLoop(call, callback) {
+    matrixArray = call.array
+    resultArray = Array.from(matrixArray.length)
+    for(nodeNo=0; i<matrixArray.length; nodeNo++){
+        var client = new matrixProto.Greeter(targetArray[i], grpc.credentials.createInsecure());
+        client.multiplyMatrices({array1:string1,array2:matrixArray[i]},function(err, response) {
+            console.log("Received response")
+        
+            if(response.message.length > 0){	
+                x = response.message
+                console.log("counter", nodeNo, global.resultTest.length)
+                
+                output = []
+                for (i = 0; i < x.length; i++){
+                    addRow = ""
+                    for (j = 0; j < x[i].items.length; j++){
+                        addRow += x[i].items[j] + " "
+                    }
+                    output.push(addRow.trim())
+                }
+                console.log("output mf",output)
+                global.operationsRun ++;
+                console.log("operations run", global.operationsRun, matrixArray.length)
+                if(global.operationsRun == matrixArray.length){
+                    //console.log(global.resultTest)
+                    callback(null, {result:resultArray})
+                } 
+                
+            } 
+        });
+
+        // Should be asynchronously run
+        console.log("test asynchronous", i)
+
+    }
+    
 }
 
 
@@ -407,8 +450,14 @@ params
     console.log("footprint", footprint)
     console.time('Multiplication time:')
     isUploaded = checkUpload()
-    global.resultTest = Array.from(3)
-    scalingMatrix = lib.createResultMatrix(3, matrix2)
+    global.resultTest = Array.from(numServers)
+    scalingMatrix = lib.createResultMatrix(numServers, matrix2)
+    //multiplyLoop({array:scalingMatrix})
+    /*multiplyLoop({array:scalingMatrix}, function(err, response){
+        if(response.array.length > 0){
+            console.log("All done mffff!")
+        }
+    });*/
     scaleMultiplication(scalingMatrix, 0)	
    
 });

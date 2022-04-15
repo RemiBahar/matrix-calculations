@@ -79,11 +79,13 @@ exports.responseToHTML = function(x){
 
     return output
 }
-
-exports.responseToString = function(x, counter){
+exports.responseToString = function(call, callback){
     /*
         Converts gRPC response
     */
+
+    x = call.response 
+    counter = call.counter
     
     output = []
     for (i = 0; i < x.length; i++){
@@ -93,27 +95,13 @@ exports.responseToString = function(x, counter){
         }
         output.push(addRow.trim())
     }
-    /*
-    if(counter == 0){
-        global.resultTest = output
-    } else {
-        for (i=0; i< x.length; i++){
-            global.resultTest += output[[i]
-        }
-    }*/
+    
     global.resultTest[counter] = output
     global.operationsRun ++;
-    console.log("Operations run", global.operationsRun);
-    if(global.operationsRun == 3){
-	    output = ""
-	    for(i=0; i < x.length; i++){
-		    output = ""
-		    for (j = 0; j < global.resultTest.length; j++){
-			    output += global.resultTest[j][i] 
-		    }
-		    output += "\n"
-	    }
-	    console.log("global mf", output);
+    console.log("test", global.operationsRun)
+    if(global.operationsRun == global.resultTest.length){
+        console.log("global mf", global.resultTest)
+        callback(null, {result:global.resultTest})
     } 
 }
 
