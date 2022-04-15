@@ -179,7 +179,7 @@ exports.createResultMatrix = function(noNodes, matrix2){
 
     let result =Array(noNodes).fill('')
     
-    console.log("initial", result.length)
+    //console.log("initial", result.length)
     for (i = 0; i < N; i++) {
         var array = matrix2[i].split(" "); //O(N)
         var noElems = 1
@@ -194,7 +194,7 @@ exports.createResultMatrix = function(noNodes, matrix2){
                 }
                 //console.log(result)
                 result[stringNo] += addResult
-                console.log(result)
+                //console.log(result)
 
                 addResult = ""
                 noElems = 1

@@ -12,56 +12,63 @@ Install Node
  cd ~
  curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
  sudo bash nodesource_setup.sh
+ ```
+
+ ```bash
  sudo apt-get install nodejs
+ ```
+
+ ```bash
  sudo apt-get install build-essential
  ```
 2. Verify installation
 ```bash
 node -v
+```
+
+```bash
 npm -v
 ```
 
 Clone project
 1. Run:
 ```bash
+cd ~
 git clone https://github.com/RemiBahar/matrix-calculations.git
 ```
 
-Set-up pm2
-1. Run 
-```bash
-sudo npm install -g pm2
-pm2 start app.js
-pm2 startup systemd
-```
-2. Run the last line of the previous command's output
-5. Run: systemctl status pm2-u. Where u is the user
-
-Adjust firewall
-1. Run:
-```bash 
-sudo ufw enable
-sudo ufw allow 'Nginx Full'
-```
-2. The following command should output Nginx HTPP | allow
-```bash 
-sudo ufw status
-```
-
-Set-up Nginx
+Install Nginx
 1. Run:
 ```bash
 sudo apt-get update
 sudo apt-get install nginx
 ```
-2. Verify set-up: visit http://ip where ip is the ip address of your server
-3. Run:
+
+Configure Nginx
+1. Run
+```bash
+sudo ufw enable
+```
+
+```bash
+sudo ufw allow 'Nginx Full'
+```
+
+2. The following command should output Nginx HTPP | allow
+```bash 
+sudo ufw status
+```
+
+3. Verify set-up: visit http://ip where ip is the ip address of your server. An Nginx page should display.
+
+4. Run:
 ```bash
 cd /
 cd /etc/nginx/sites-available 
-chmod 777 default
+sudo chmod 777 default
 ```
-4. Run sudo nano default and replace the location block with the following
+
+5. Run sudo nano default and replace the location block with the following
 location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -71,32 +78,19 @@ location / {
         proxy_cache_bypass $http_upgrade;
     }
 
-Finally
-1. Visit ip address in browser
+6. Test to see if everything is configured correctly
+```bash
+sudo nginx -t
+```
+
+```bash
+sudo systemctl restart nginx
+```
+7. From project directory (matrix-calculations)@
+```bash
+node app.js
+```
+
+8. Finally: visit ip address in browser, the app's homepage should now be shown
 
 ## Set up server(s)
-
-For each server you want to split the matrix calculations amongst:
-
-Install Node
-1. From home directory, install Node:
-```bash
- cd ~
- curl -sL https://deb.nodesource.com/setup_16.x -o nodesource_setup.sh
- sudo bash nodesource_setup.sh
- sudo apt-get install nodejs
- sudo apt-get install build-essential
- ```
-2. Verify installation
-```bash
-node -v
-npm -v
-```
-
-Clone project
-1. Run:
-```bash
-git clone https://github.com/RemiBahar/matrix-calculations.git
-```
-
-
