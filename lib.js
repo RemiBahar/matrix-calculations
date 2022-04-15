@@ -48,7 +48,7 @@ exports.toList = function(string){
         var array = rows[i].split(" "); //O(N)
         
         row =[] 
-        
+
         for (x in array){ 
             row.push(Number(array[x])) //O(1)
         }
@@ -78,6 +78,53 @@ exports.responseToHTML = function(x){
     output += "</table>"
 
     return output
+}
+
+exports.responseToString = function(x, counter){
+    /*
+        Converts gRPC response
+    */
+    
+    output = []
+    for (i = 0; i < x.length; i++){
+        addRow = ""
+        for (j = 0; j < x[i].items.length; j++){
+            addRow += x[i].items[j] + " "
+        }
+        output.push(addRow)
+    }
+
+    if(counter == 0){
+        global.resultTest = output
+    } else {
+        for (i=0; i< x.length; i++){
+            global.resultTest[i] += output[i]
+        }
+    }
+   
+    
+    console.log("global mf", global.resultTest)
+}
+
+exports.responseToFile = function(x, filename){
+    output = ""
+    for (i = 0; i < x.length; i++){
+        addRow = ""
+        for (j = 0; j < x[i].items.length; j++){
+            addRow += x[i].items[j] + " "
+        }
+        output += addRow.trim()
+        output += "\n"
+    }
+    fileString = fs.readFileSync(filename).toString("UTF-8")
+    console.log("fileString", fileString)
+    fs.writeFile(filename, output, err => {
+        if (err) {
+          console.error(err)
+          return
+        }
+        //file written successfully
+      })
 }
 
 exports.toMessage = function(array){

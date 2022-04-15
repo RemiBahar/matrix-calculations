@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload({
     createParentPath: true
 }));
-
+global.resultTest = ""
 // view engine setup
 //app.set('html', path.join(__dirname, 'html'));
 app.set('view engine', 'pug');
@@ -77,6 +77,7 @@ string1 = fs.readFileSync(path1).toString("UTF-8")
 matrix1 = string1.split("\n")
 string2 = fs.readFileSync(path2).toString("UTF-8")
 matrix2 = string2.split("\n")
+var test = ""
 checkUpload = function(){
     returnVal = false
     if (fs.existsSync(path1, 'UTF-8') && fs.existsSync(path2, 'UTF-8')) {
@@ -116,14 +117,19 @@ function serverToArray(_string){
      
   }
 
-function testFunction(subString2) {
-
-    client.multiplyMatrices({array1:string1,array2:subString2},function(err, response) {
+function testFunction(matrixArray, i) {
+    
+    client.multiplyMatrices({array1:string1,array2:matrixArray[i]},function(err, response) {
         console.log("Received response")
         
         if(response.message.length > 0){ 
-          const output = response.message
-          console.log("Output", output)
+          const output = lib.responseToString(response.message, i)
+          if(i < (matrixArray.length - 1)){
+            testFunction(matrixArray, i+1)
+          }
+          
+          
+          
         } 
       });
     
@@ -138,9 +144,10 @@ app.get('/', async (req, res) => {
 
         Multiply and Add links are shown if matrices have been uploaded
     */
-    resultMatrix = lib.createResultMatrix(3, matrix2).map(testFunction)
-   
+    scalingMatrix = lib.createResultMatrix(3, matrix2)
+    testFunction(scalingMatrix, 0)
     //result = resultMatrix.map(testFunction)
+    console.log("test", test)
   
     res.render('index',  { title: 'Home', uploaded: checkUpload()})
 });
