@@ -141,8 +141,28 @@ function scaleMultiplication(matrixArray, i) {
             global.operationsRun ++;
             console.log("test", global.operationsRun)
             if(global.operationsRun == global.resultTest.length){
-                console.log("global mf", global.resultTest)
+                //console.log("global mf", global.resultTest)
+                output = "<!DOCTYPE html><html><body><table>"
+                for(i=0; i < global.resultTest[0].length; i++){
+                    output += "<tr>"
+                    for(j=0; j < global.resultTest.length; j++){
+                        output += "<td>" + global.resultTest[j][i] + "</td>"
+                    }
+                    output += "</tr>"
+                }
+                output += "</table></body></html>"
+                //console.log("global mf", output)
+                
+                fs.writeFile('./output.html', output, err => {
+                    if (err) {
+                      console.error(err)
+                      return
+                    }
+                    //file written successfully
+                  })
+                
                 console.log("All done mf")
+                  
             }  	
               
         } 
@@ -152,69 +172,7 @@ function scaleMultiplication(matrixArray, i) {
     console.log("test asynchronous", i)
 }
 
-function scaleMultiplicationOld(call, callback) {
-    matrixArray = call.array
-    i = call.counter
-    var client = new matrixProto.Greeter(targetArray[i], grpc.credentials.createInsecure());
-    client.multiplyMatrices({array1:string1,array2:matrixArray[i]},function(err, response) {
-        console.log("Received response")
-	
-        if(response.message.length > 0){	
-          lib.responseToString({response:response.message, counter:i}, function(err, response){
-            console.log("Wrote response")
-            if(response.result.length > 0){
-                console.log("All done mf")
-                callback(null, {result:global.resultTest})
-                //res.render('index',  { title: 'Home', uploaded: checkUpload()})
-            }
-          });
-              
-        } 
-      });
 
-    // Should be asynchronously run
-    console.log("test asynchronous", i)
-}
-
-
-
-function multiplyLoop(call, callback) {
-    matrixArray = call.array
-    resultArray = Array.from(matrixArray.length)
-    for(nodeNo=0; i<matrixArray.length; nodeNo++){
-        var client = new matrixProto.Greeter(targetArray[i], grpc.credentials.createInsecure());
-        client.multiplyMatrices({array1:string1,array2:matrixArray[i]},function(err, response) {
-            console.log("Received response")
-        
-            if(response.message.length > 0){	
-                x = response.message
-                console.log("counter", nodeNo, global.resultTest.length)
-                
-                output = []
-                for (i = 0; i < x.length; i++){
-                    addRow = ""
-                    for (j = 0; j < x[i].items.length; j++){
-                        addRow += x[i].items[j] + " "
-                    }
-                    output.push(addRow.trim())
-                }
-                console.log("output mf",output)
-                global.operationsRun ++;
-                console.log("operations run", global.operationsRun, matrixArray.length)
-                if(global.operationsRun == matrixArray.length){
-                    //console.log(global.resultTest)
-                    callback(null, {result:resultArray})
-                } 
-                
-            } 
-        });
-
-        // Should be asynchronously run
-        console.log("test asynchronous", i)
-
-    }
-    
-}
 
 
 // Home page
@@ -240,8 +198,8 @@ app.get('/process-callback', async (req, res) => {
     res.render('error',  { title: 'Error', uploaded: false})
 });
 
-app.get('/scaling', async (req, res) => {
-   
+app.get('/output', async (req, res) => {
+   res.sendFile(path.resolve('./output.html'), 'UTF-8')
 });
 
 // Upload matrices
@@ -505,6 +463,7 @@ params
         });*/
         console.log("synchronous", i)	
     }
+    res.render('output',  { title: 'Multiply', uploaded: isUploaded, table:"<a href='/output'> View results </a>"}) 
     
    
 });
