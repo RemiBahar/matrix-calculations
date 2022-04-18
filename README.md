@@ -6,6 +6,12 @@
 
 ## Set-up client server
 
+Create compute instance
+1. Select the following options
+
+* Set boot-disk to Ubuntu
+* Allow HTTP and HTTPS traffic
+
 Install Node
 1. From home directory, install Node:
 ```bash
@@ -18,16 +24,9 @@ Install Node
  sudo apt-get install nodejs
  ```
 
- ```bash
- sudo apt-get install build-essential
- ```
 2. Verify installation
 ```bash
-node -v
-```
-
-```bash
-npm -v
+node -v && npm -v
 ```
 
 Clone project
@@ -69,6 +68,7 @@ sudo chmod 777 default
 ```
 
 5. Run sudo nano default and replace the location block with the following
+```bash
 location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -77,6 +77,7 @@ location / {
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
     }
+```
 
 6. Test to see if everything is configured correctly
 ```bash
@@ -97,6 +98,12 @@ node app.js
 
 For each server/node
 
+Create compute instance
+1. Select the following options
+
+* Set boot-disk to Ubuntu
+* Allow HTTP and HTTPS traffic
+
 Install Node
 1. From home directory, install Node:
 ```bash
@@ -109,16 +116,9 @@ Install Node
  sudo apt-get install nodejs
  ```
 
- ```bash
- sudo apt-get install build-essential
- ```
 2. Verify installation
 ```bash
-node -v
-```
-
-```bash
-npm -v
+node -v && npm -v
 ```
 
 Clone project
@@ -128,17 +128,18 @@ cd ~
 git clone https://github.com/RemiBahar/matrix-calculations.git
 ```
 
-Install Nginx
-1. Run:
-```bash
-sudo apt-get update
-sudo apt-get install nginx
-```
-
 Run server.js
 1. Run:
 ```bash
 cd ~
 cd matrix-calculations
 node server.js
+```
+
+Update client with server details
+1. Find the internal IP address of the server you created 
+2. From the client: add a new entry to servers.txt in the form ip_address:50051
+```bash
+cd ~/matrix-calculations
+nano servers.txt
 ```
