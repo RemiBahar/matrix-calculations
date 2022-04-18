@@ -18,60 +18,21 @@ var packageDefinition = protoLoader.loadSync(
     });
 var matrixProto = grpc.loadPackageDefinition(packageDefinition).matrix;
 
-function serverToArray(string){
-  var rows = string.split("\n")
-  matrix = []
- 
-  //O(N^2)
-  //var rows = file.toString().split("\n"); //O(3N^2)
-  var rows = string.split("\n");
-
-  for (i in rows){
-      var array = rows[i].split(" "); //O(N)
-
-      row =[] 
-      for (x in array){
-        n = Number(array[x])
-        row.push(Number(array[x])) //O(1)
-      }
-      matrix.push(row) //O(1)
-
-  }
-
-  return matrix
-   
-}
-
-function toList(string){
-  var rows = string.split("\n")
-  matrix = []
-  
-  //O(N^2)
-  for (i in rows){
-      var array = rows[i].split(" "); //O(N)
-      
-      row =[] 
-      
-      for (x in array){ 
-          row.push(Number(array[x])) //O(1)
-      }
-
-      matrix.push(row) //O(1)
-  }
-  //console.log("matrix:", matrix)
-  return matrix
-   
-  
-}
-
 // Perform matrix addition
 function addMatrices(call, callback) {
     /*
-        Adds together matrices and returns the result as a proto
+        Adds together matrices and returns the result as a protobuff
+
+        Parameters:
+          call - call from app.js gRPC client
+          callback - passed to gRPC client to handle asynchronous result
+
+        Returns:
+          proto_result - protobuff of answer
     */
         console.log("Performing Addition")
-        var _matrix1 = toList(call.request.array1)
-        var _matrix2 = toList(call.request.array2)
+        var _matrix1 = lib.toList(call.request.array1)
+        var _matrix2 = lib.toList(call.request.array2)
         const N = _matrix1.length
         const M = _matrix2.length
         const P = _matrix2[0].length
@@ -92,9 +53,19 @@ function addMatrices(call, callback) {
 
   // Perform matrix multiplication
  function multiplyMatrices(call, callback) {
+    /*
+        Multiply together matrices and returns the result as a protobuff
+
+        Parameters:
+          call - call from app.js gRPC client
+          callback - passed to gRPC client to handle asynchronous result
+
+        Returns:
+          proto_result - protobuff of answer
+    */
     console.log("Performing Multiplication")
-    var _matrix1 = toList(call.request.array1)
-    var _matrix2 = toList(call.request.array2)
+    var _matrix1 = lib.toList(call.request.array1)
+    var _matrix2 = lib.toList(call.request.array2)
     const N = _matrix1.length
     const M = _matrix2.length
     const P = _matrix2[0].length

@@ -10,13 +10,11 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // enable files upload
-/** This is a description of the foo function. */
 app.use(fileUpload({
     createParentPath: true
 }));
 
 // view engine setup
-//app.set('html', path.join(__dirname, 'html'));
 app.set('view engine', 'pug');
 app.use(express.json());
 
@@ -83,8 +81,8 @@ checkUpload = function(reload){
     return returnVal
 }
 
+// Define servers
 targetArray = fs.readFileSync("./servers.txt").toString("UTF-8").split("\n")
-console.log(targetArray)
 
 
 
@@ -104,7 +102,7 @@ app.get('/upload-matrix', async (req, res) => {
     res.render('upload',  { title: 'Upload', uploaded: checkUpload()})
 });
 
-// Error page       else {                  
+// Error page               
 app.get('/process-callback', async (req, res) => {
     res.render('error',  { title: 'Error', uploaded: false})
 });
@@ -164,6 +162,16 @@ app.post('/process-upload-matrix', async (req, res) => {
 
 // Deadline page
 app.get('/deadline/calculation/:calculation', async (req, res) => {
+   /*
+    Parameters: 
+        :calculation - add for adding matrices or multiply for multiplying matrices
+
+    On-submission:
+        User redirected to /add or /multiply
+
+    Outputs a form where the user can view footprint, number of block calls and edit the deadline.
+    Based on this deadline a script calculates the number of servers needed.
+   */
    if(checkUpload(reload=true)){
         console.log("test", matrix1.length, matrix2.length)
         const n = 2
@@ -182,7 +190,6 @@ app.get('/deadline/calculation/:calculation', async (req, res) => {
             client.addMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
                     console.log("Received response")
                     if(response.message.length > 0){
-                    var output = lib.responseToHTML(response.message)
                     var endTime = performance.now()
                     footprint = endTime - startTime
                     numBlockCalls = matrix1.length**2/n**2
@@ -197,14 +204,12 @@ app.get('/deadline/calculation/:calculation', async (req, res) => {
                     } 
                     
                 });
-            //console.log(footprint)
         }
         else if (req.params["calculation"] == "multiply") {
             var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure()); 		
             client.multiplyMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
                     console.log("Received response")
                     if(response.message.length > 0){
-                    var output = lib.responseToHTML(response.message)
                     var endTime = performance.now()
                     footprint = endTime - startTime
                     numBlockCalls = matrix1.length**2/n**2
@@ -219,8 +224,6 @@ app.get('/deadline/calculation/:calculation', async (req, res) => {
                     } 
                     
                 });
-            
-            //console.log(footprint)
         }
         else {
             res.render('error',  { title: 'Error', uploaded: checkUpload()})
@@ -232,12 +235,21 @@ app.get('/deadline/calculation/:calculation', async (req, res) => {
 });
 
 
-// Send multiply request - 14.718s for 1000x1000. 13.760s without templating. 12.931s with console.log
+// Send gRPC server requests
 app.post(["/multiply", "/add"], async (req, res) => {
     /*
-        Sends gRPC request to the multiplyMatrices function.
-params
-        Returns: HTML of response
+        Sends gRPC request to multiplyMatrices for /multiply or addMatrices for /add.
+        The number of servers called depends on deadline and scaling function.
+        
+        Data structures:
+            scalingMatrix ([int]) - matrix2 columns split amongst servers for load balancing. Server i matrix2 stored in scalingMatrix[i]
+            promises [[char]] - makes an asynchronous request for each server. When an answer is received after multiplying/adding the matrices 
+                the index is resolved
+            output [char] - after all promises resolved, the answer matrix is combined into a string and rendered as html.
+
+        Returns:
+        -Page showing result matrix
+
     */
     console.log()
     const deadline = req.body["deadline"]
@@ -287,10 +299,17 @@ params
         }
 
         output += "</tbody></table></body></html>"
-        
-        res.render('output',  { title: title, uploaded: true, table:output}) 
         var endTime = performance.now()
-        console.log("Finished.Time taken:", endTime - startTime)
+        var executionTime = endTime - startTime
+        console.log("Finished.Time taken:", executionTime)
+        res.render('output',  { 
+            title: title, 
+            uploaded: true, 
+            table:output, 
+            time: "<label> Execution time (ms) </label><input type='text' id='time' value='"+executionTime+"' disabled>",
+            noServers: "<label> Number of servers used </label><input type='text' id='numServers' value='"+numServers+"' disabled></input>"
+        }) 
+        
     });
    
 });
