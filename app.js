@@ -44,12 +44,6 @@ var packageDefinition = protoLoader.loadSync(
     });
 var matrixProto = grpc.loadPackageDefinition(packageDefinition).matrix;
 
-//targetArray = ['10.154.0.8:50051','10.154.0.7:50051','10.154.0.6:50051'];
-targetArray = ["localhost:50051", "localhost:50051", "localhost:50051", "localhost:50051", "localhost:50051", "localhost:50051", "localhost:50051", "localhost:50051"]
-//targetArray = ["localhost:50051"]
-
-var client = new matrixProto.Greeter(targetArray[0],grpc.credentials.createInsecure());
-
 // Define application structure
 
 const fs = require("fs"); // Or `import fs from "fs";` with ESM
@@ -88,6 +82,9 @@ checkUpload = function(reload){
     }
     return returnVal
 }
+
+targetArray = fs.readFileSync("./servers.txt").toString("UTF-8").split("\n")
+console.log(targetArray)
 
 
 
@@ -246,12 +243,11 @@ params
     const deadline = req.body["deadline"]
     var numServers = (numBlockCalls * (footprint/1000))/(deadline*1000)
 
-    if(numServers >= 7){
+    if(numServers >= targetArray.length){
         numServers = 8
     } else {
         numServers = math.ceil(numServers)
     }
-    numServers = 8
     console.log("numServers", numServers)
     console.log("footprint", footprint)
     console.time('Multiplication time:')
