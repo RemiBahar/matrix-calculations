@@ -81,11 +81,11 @@ matrix1 = string1.split("\n")
 string2 = fs.readFileSync(path2).toString("UTF-8")
 matrix2 = string2.split("\n")
 var test = ""
-checkUpload = function(){
+checkUpload = function(reload){
     returnVal = false
     if (fs.existsSync(path1, 'UTF-8') && fs.existsSync(path2, 'UTF-8')) {
         returnVal = true
-        if(matrix1 == false || matrix2 == false || string1 == false || string2 == false){
+        if(reload || !matrix1|| !matrix2 || !string1 || !string2){
             string1 = fs.readFileSync(path1).toString("UTF-8")
             matrix1 = string1.split("\n")
             string2 = fs.readFileSync(path2).toString("UTF-8")
@@ -185,69 +185,73 @@ app.post('/process-upload-matrix', async (req, res) => {
 });
 
 app.get('/deadline/calculation/:calculation', async (req, res) => {
-    const n = 2
-    testMatrix1 = lib.subMatrix(matrix1, n, n)
-    testMatrix2 = lib.subMatrix(matrix2, n, n)
-    console.log("length:", matrix1.length)
+   if(checkUpload(reload=true)){
+        console.log("test", matrix1.length, matrix2.length)
+        const n = 2
+        testMatrix1 = lib.subMatrix(matrix1, n, n)
+        testMatrix2 = lib.subMatrix(matrix2, n, n)
+        console.log("length:", matrix1.length)
 
-    var startTime = performance.now()
+        var startTime = performance.now()
 
-    isUploaded = checkUpload()
-    target = 'localhost:50051';
-    var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
- 
-    if (req.params["calculation"] == "add") {
-	var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure());
-        client.multiplyMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
-            console.log("Received response")
+        isUploaded = checkUpload()
+        target = 'localhost:50051';
+        var client = new matrixProto.Greeter(target, grpc.credentials.createInsecure());
+    
+        if (req.params["calculation"] == "add") {
+        var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure());
+            client.multiplyMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
+                console.log("Received response")
+                
+                if(response.message.length > 0){
+                
+                
+                var output = lib.responseToHTML(response.message)
+                var endTime = performance.now()
+                footprint = endTime - startTime
+                numBlockCalls = matrix1.length**2/n**2
+    
+                res.render('deadline',  
+                    { title: 'Deadline', 
+                    uplgaded: checkUpload(), 
+                    process: "<form action='/add' method='post'>", 
+                    footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
+                    numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
+                    })
+                } 
             
-            if(response.message.length > 0){
-            
-              
-              var output = lib.responseToHTML(response.message)
-              var endTime = performance.now()
-              footprint = endTime - startTime
-              numBlockCalls = matrix1.length**2/n**2
-  
-              res.render('deadline',  
-                { title: 'Deadline', 
-                uplgaded: checkUpload(), 
-                process: "<form action='/add' method='post'>", 
-                footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
-                numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
-                })
-            } 
-            
-          });
-        //console.log(footprint)
-      }
-    else if (req.params["calculation"] == "multiply") {
-          var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure()); 		
-	  client.addMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
-            console.log("Received response")
-            if(response.message.length > 0){
-              var output = lib.responseToHTML(response.message)
-              var endTime = performance.now()
-              footprint = endTime - startTime
-              numBlockCalls = matrix1.length**2/n**2
+            });
+            //console.log(footprint)
+        }
+        else if (req.params["calculation"] == "multiply") {
+            var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure()); 		
+        client.addMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
+                console.log("Received response")
+                if(response.message.length > 0){
+                var output = lib.responseToHTML(response.message)
+                var endTime = performance.now()
+                footprint = endTime - startTime
+                numBlockCalls = matrix1.length**2/n**2
 
-              res.render('deadline',  
-                { title: 'Deadline', 
-                uploaded: checkUpload(), 
-                process: "<form action='/multiply' method='post'>", 
-                footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
-                numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
-                })
-            } 
+                res.render('deadline',  
+                    { title: 'Deadline', 
+                    uploaded: checkUpload(), 
+                    process: "<form action='/multiply' method='post'>", 
+                    footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
+                    numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
+                    })
+                } 
+                
+            });
             
-          });
-        
-        //console.log(footprint)
-    }
-    else {
-        res.render('error',  { title: 'Error', uploaded: checkUpload()})
-    }
-   
+            //console.log(footprint)
+        }
+        else {
+            res.render('error',  { title: 'Error', uploaded: checkUpload()})
+        }
+
+   }
+    
 
 });
 
