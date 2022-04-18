@@ -1,7 +1,22 @@
 const fs = require("fs"); // Or `import fs from "fs";` with ESM
 const { result } = require("lodash");
 const math = require("mathjs") 
+// Set-up gRPC
+const path = require('path');
+var PROTO_PATH = path.resolve('./proto/matrix.proto');
 
+var parseArgs = require('minimist');
+var grpc = require('@grpc/grpc-js');
+var protoLoader = require('@grpc/proto-loader');
+var packageDefinition = protoLoader.loadSync(
+    PROTO_PATH,
+    {keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true
+    });
+var matrixProto = grpc.loadPackageDefinition(packageDefinition).matrix;
 
 exports.toArray = function(string){
     var rows = string.split("\n")
@@ -79,32 +94,6 @@ exports.responseToHTML = function(x){
 
     return output
 }
-exports.responseToString = function(call, callback){
-    /*
-        Converts gRPC response
-    */
-
-    x = call.response 
-    counter = call.counter
-    
-    output = []
-    for (i = 0; i < x.length; i++){
-        addRow = ""
-        for (j = 0; j < x[i].items.length; j++){
-            addRow += x[i].items[j] + " "
-        }
-        output.push(addRow.trim())
-    }
-    
-    global.resultTest[counter] = output
-    global.operationsRun ++;
-    console.log("test", global.operationsRun)
-    if(global.operationsRun == global.resultTest.length){
-        console.log("global mf", global.resultTest)
-        callback(null, {result:global.resultTest})
-    } 
-}
-
 
 exports.toMessage = function(array){
     return_message = []
@@ -123,37 +112,6 @@ exports.createResultMatrix = function(noNodes, matrix2){
     //console.log("N", N, "maxRows", "noNodes", noNodes, "remainder", remainder,  "maxRows", maxRows, "remainderRows", remainderRows)
     
     //let result = Array.from(Array(noNodes).keys())
-    /*
-    let stringNo = 1
-    let noElems = 1
-    let curString = ""
-    console.log("noNodes", noNodes)
-
-    for (i = 0; i < N; i++) {
-        var array = matrix2[i].split(" "); //O(N)
-        
-        stringNo = 1
-        noElems = 1
-        curString = ""
-        for (j = 0; j < N; j++){
-            
-            curString += array[j] + " "
-            console.log(array[j], noElems)
-            if((stringNo != (noNodes - 1) && noElems == maxRows) || (stringNo == (noNodes -1) && noElems == remainderRows)){
-                console.log("curString", curString, "stringNo", stringNo)
-                result[stringNo] += curString.trim()
-                result[stringNo] += "\n"
-                
-                curString = ""
-                noElems = 1
-                stringNo ++;
-            }
-            noElems ++;
-
-        }
-
-    }
-    */
 
     let result =Array(noNodes).fill('')
     
@@ -191,3 +149,53 @@ exports.createResultMatrix = function(noNodes, matrix2){
 
     return result
 }
+
+exports.scaleMultiplication = function(nodeNo, matrixArray, string1, targetArray) {
+    return new Promise(resolve => {
+        var client = new matrixProto.Greeter(targetArray[nodeNo], grpc.credentials.createInsecure());
+        client.multiplyMatrices({array1:string1,array2:matrixArray[nodeNo]},function(err, response) {
+            if(response.message.length > 0){
+                console.log("Received response from server", nodeNo)
+                x = response.message
+                counter = nodeNo
+                
+                output = []
+                for (i = 0; i < x.length; i++){
+                    addRow = ""
+                    for (j = 0; j < x[i].items.length; j++){
+                        addRow += x[i].items[j] + " "
+                    }
+                    output.push(addRow.trim())
+                }
+
+                resolve(output);
+                
+                
+            } 
+        });
+
+    });
+}
+
+exports.subMatrix = function(matrix, n1, n2){
+    let i = 0
+    let j = 0
+    var result = ""
+    while (i < n1){
+        row = matrix[i].split(" ")
+        
+        let addRow = ""
+        while(j < n2){
+            addRow += row[j] + " "
+            j++;
+        }
+        result += addRow.trim()
+        j = 0
+        result += "\n"
+
+        i++;
+    }
+    
+    return result.trim()
+       
+};

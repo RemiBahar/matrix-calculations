@@ -108,14 +108,6 @@ function addMatrices(call, callback) {
                 }
             }
         }
-      /*
-      for (var i = 0; i < N; i++){
-        for (var j = 0; j < N; j++){
-          console.log(matrix1[i][k], matrix2[k][j])
-        }
-
-      }
-      */
       proto_result = lib.toMessage(result)
       //console.log("Result", result)
       callback(null, proto_result);

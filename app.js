@@ -14,8 +14,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload({
     createParentPath: true
 }));
-global.resultTest = ""
-global.operationsRun = 0
+
 // view engine setup
 //app.set('html', path.join(__dirname, 'html'));
 app.set('view engine', 'pug');
@@ -97,96 +96,6 @@ checkUpload = function(){
 
     
 }
-function outputResults(res, anything){
-    console.dir(res)
-    console.log("attempting to output")
-    return res.sendFile(path.resolve('./output.html'), 'UTF-8')
-}
-function serverToArray(_string){
-    var rows = _string.split("\n")
-    var matrix = []
-   
-    //O(N^2)
-    //var rows = file.toString().split("\n"); //O(3N^2)
-    var rows = _string.split("\n");
-  
-    for (i in rows){
-        var array = rows[i].split(" "); //O(N)
-  
-        row =[] 
-        for (x in array){
-          n = Number(array[x])
-          row.push(Number(array[x])) //O(1)
-        }
-        matrix.push(row) //O(1)
-  
-    }
-  
-    return matrix
-     
-  }
-
-
-
-    function scaleMultiplication(nodeNo, matrixArray) {
-        return new Promise(resolve => {
-            var client = new matrixProto.Greeter(targetArray[nodeNo], grpc.credentials.createInsecure());
-            client.multiplyMatrices({array1:string1,array2:matrixArray[nodeNo]},function(err, response) {
-                
-            
-                if(response.message.length > 0){
-                    console.log("Received response from server", nodeNo)
-                    x = response.message
-                    counter = nodeNo
-                    
-                    output = []
-                    for (i = 0; i < x.length; i++){
-                        addRow = ""
-                        for (j = 0; j < x[i].items.length; j++){
-                            addRow += x[i].items[j] + " "
-                        }
-                        output.push(addRow.trim())
-                    }
-                    
-                    global.resultTest[counter] = output
-                    global.operationsRun ++;
-                    //console.log(global.resultTest)
-                    resolve();
-                    if(global.operationsRun == global.resultTest.length){
-                        //console.log("global mf", global.resultTest)
-                        output = "<!DOCTYPE html><html><body><table>"
-                        for(i=0; i < global.resultTest[0].length; i++){
-                            output += "<tr>"
-                            for(j=0; j < global.resultTest.length; j++){
-                                output += "<td>" + global.resultTest[j][i] + "</td>"
-                            }
-                            output += "</tr>"
-                        }
-                        output += "</table></body></html>"
-                        global.output = output
-                        //console.log("global mf", output)
-                        
-                        fs.writeFile('./output.html', output, err => {
-                            if (err) {
-                            console.error(err)
-                            return
-                            }
-                            //file written successfully
-                        })
-                        global.endTime = performance.now()
-                        console.log("Finished.Time taken:", global.endTime - global.startTime)
-                        
-                    }  	
-                    
-                } 
-            });
-        
-            // Should be asynchronously run
-        });
-    }
-
-
-
 
 
 
@@ -275,34 +184,10 @@ app.post('/process-upload-matrix', async (req, res) => {
 
 });
 
-function subMatrix(matrix, n1, n2){
-    let i = 0
-    let j = 0
-    result = ""
-    while (i < n1){
-        row = matrix[i].split(" ")
-        
-        let addRow = ""
-        while(j < n2){
-            addRow += row[j] + " "
-            j++;
-        }
-        result += addRow.trim()
-        j = 0
-        result += "\n"
-
-        i++;
-    }
-    
-    return result.trim()
-       
-};
-
-
 app.get('/deadline/calculation/:calculation', async (req, res) => {
     const n = 2
-    testMatrix1 = subMatrix(matrix1, n, n)
-    testMatrix2 = subMatrix(matrix2, n, n)
+    testMatrix1 = lib.subMatrix(matrix1, n, n)
+    testMatrix2 = lib.subMatrix(matrix2, n, n)
     console.log("length:", matrix1.length)
 
     var startTime = performance.now()
@@ -407,37 +292,6 @@ app.post('/add', async (req, res) => {
     });
 });	
 
-function convertString(){
-    // Create read interface
-    const readInterface = readline.createInterface({
-        input: fs.createReadStream(path1),
-        output: process.stdout,
-        console: false
-    });
-
-    let i =0
-    var returnString = ""
-
-    readInterface.on("line", (line) => foo(line, ++i))
-    const foo = (line, i) => {
-        if (i < 2){
-            var array = line.split(" ").slice(0, 2);; //O(N)
-            returnString += array[0]
-            returnString += array[1]
-            returnString += "\n"   
-        }
-        else {
-            readInterface.close();
-
-        }
-      }
-    console.log(returnString)
-    return returnString
-    //console.log("4by4string", footprintString1)
-    
-};
-
-
 // Send multiply request - 14.718s for 1000x1000. 13.760s without templating. 12.931s with console.log
 app.post('/multiply', async (req, res) => {
     /*
@@ -446,54 +300,48 @@ params
         Returns: HTML of response
     */
     const deadline = req.body["deadline"]
-    var numServers = (numBlockCalls * footprint)/(deadline*1000)
+    var numServers = (numBlockCalls * (footprint/1000))/(deadline*1000)
 
     if(numServers >= 7){
         numServers = 8
     } else {
         numServers = math.ceil(numServers)
     }
-
+    numServers = 8
     console.log("numServers", numServers)
     //console.log("4by4", string1)
     //console.log("hello", convertString())
     console.log("footprint", footprint)
     console.time('Multiplication time:')
     isUploaded = checkUpload()
-    numServers = targetArray.length
-    global.resultTest = Array.from(numServers)
     scalingMatrix = lib.createResultMatrix(numServers, matrix2)
-    //multiplyLoop({array:scalingMatrix})
-    /*multiplyLoop({array:scalingMatrix}, function(err, response){
-        if(response.array.length > 0){
-            console.log("All done mffff!")
-        }
-    });*/
-    global.startTime = performance.now()
+
+    var startTime = performance.now()
     
     numArray = Array.from(Array(numServers).keys())
 
+    var promises = numArray.map(function(x) { return lib.scaleMultiplication(x, scalingMatrix, string1, targetArray); })
+    Promise.all(promises).then(function(results) { 
+        output = "<!DOCTYPE html><html><body><table>"
+        for(i=0; i < results[0].length; i++){
+            output += "<tr>"
+            for(j=0; j < results.length; j++){
+                output += "<td>" + results[j][i] + "</td>"
+            }
+            output += "</tr>"
+        }
+        output += "</table></body></html>"
 
-    //const numArray2 = numArray.map(myFunction(matrixArray))
-    //const numArray2 = numArray.map(function(x) { return myFunction(x, scalingMatrix); })
-    var promises = numArray.map(function(x) { return scaleMultiplication(x, scalingMatrix); })
-    /*
-    Promise.all(promises).then(function(results) {
-        console.log("All done mf!")
-        //global.res.sendFile(path.resolve('./output.html'), 'UTF-8')
-    })
-    */
-    //Promise.all(promises).then(function(results) { return res.render('index',  { title: 'Home', uploaded: true}) });
-    Promise.all(promises).then(function(results) { return res.render('output',  { title: 'Multiply', uploaded: true, table:global.output}) });
-    
-    //console.log("test", numArray2)
- 
-    /*
-    for(i=0; i < numServers; i++){
-        scaleMultiplication(scalingMatrix, i)
-        console.log("synchronous", i)	
-    }
-    */
-    
+        fs.writeFile('./output.html', output, err => {
+            if (err) {
+            console.error(err)
+            return
+            }
+            //file written successfully
+        })
+        var endTime = performance.now()
+        console.log("Finished.Time taken:", endTime - startTime)
+        return res.render('output',  { title: 'Multiply', uploaded: true, table:output}) 
+    });
    
 });
