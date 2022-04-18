@@ -119,14 +119,14 @@ function serverToArray(_string){
      
   }
 
-function scaleMultiplication(matrixArray, i) {
-    var client = new matrixProto.Greeter(targetArray[i], grpc.credentials.createInsecure());
-    client.multiplyMatrices({array1:string1,array2:matrixArray[i]},function(err, response) {
+function scaleMultiplication(matrixArray, nodeNo) {
+    var client = new matrixProto.Greeter(targetArray[nodeNo], grpc.credentials.createInsecure());
+    client.multiplyMatrices({array1:string1,array2:matrixArray[nodeNo]},function(err, response) {
         console.log("Received response")
 	
         if(response.message.length > 0){
             x = response.message
-            counter = i
+            counter = nodeNo
             
             output = []
             for (i = 0; i < x.length; i++){
@@ -139,7 +139,8 @@ function scaleMultiplication(matrixArray, i) {
             
             global.resultTest[counter] = output
             global.operationsRun ++;
-            console.log("test", global.operationsRun)
+            console.log("test", global.operationsRun, global.resultTest.length)
+            console.log(global.resultTest)
             if(global.operationsRun == global.resultTest.length){
                 //console.log("global mf", global.resultTest)
                 output = "<!DOCTYPE html><html><body><table>"
@@ -160,8 +161,9 @@ function scaleMultiplication(matrixArray, i) {
                     }
                     //file written successfully
                   })
-                
+                global.endTime = performance.now()
                 console.log("All done mf")
+                console.log("Time taken:", global.endTime - global.startTime)
                   
             }  	
               
@@ -171,6 +173,64 @@ function scaleMultiplication(matrixArray, i) {
     // Should be asynchronously run
     console.log("test asynchronous", i)
 }
+
+
+    function scaleMultiplication2(nodeNo, matrixArray) {
+        var client = new matrixProto.Greeter(targetArray[nodeNo], grpc.credentials.createInsecure());
+        client.multiplyMatrices({array1:string1,array2:matrixArray[nodeNo]},function(err, response) {
+            console.log("Received response")
+        
+            if(response.message.length > 0){
+                x = response.message
+                counter = nodeNo
+                
+                output = []
+                for (i = 0; i < x.length; i++){
+                    addRow = ""
+                    for (j = 0; j < x[i].items.length; j++){
+                        addRow += x[i].items[j] + " "
+                    }
+                    output.push(addRow.trim())
+                }
+                
+                global.resultTest[counter] = output
+                global.operationsRun ++;
+                console.log("test", global.operationsRun, global.resultTest.length)
+                //console.log(global.resultTest)
+                if(global.operationsRun == global.resultTest.length){
+                    //console.log("global mf", global.resultTest)
+                    output = "<!DOCTYPE html><html><body><table>"
+                    for(i=0; i < global.resultTest[0].length; i++){
+                        output += "<tr>"
+                        for(j=0; j < global.resultTest.length; j++){
+                            output += "<td>" + global.resultTest[j][i] + "</td>"
+                        }
+                        output += "</tr>"
+                    }
+                    output += "</table></body></html>"
+                    //console.log("global mf", output)
+                    
+                    fs.writeFile('./output.html', output, err => {
+                        if (err) {
+                          console.error(err)
+                          return
+                        }
+                        //file written successfully
+                      })
+                    global.endTime = performance.now()
+                    console.log("All done mf")
+                    console.log("Time taken:", global.endTime - global.startTime)
+                      
+                }  	
+                  
+            } 
+          });
+    
+        // Should be asynchronously run
+        console.log("test asynchronous", i)
+    }
+
+
 
 
 
@@ -422,7 +482,7 @@ function convertString(){
     
 };
 
-    
+
 // Send multiply request - 14.718s for 1000x1000. 13.760s without templating. 12.931s with console.log
 app.post('/multiply', async (req, res) => {
     /*
@@ -453,16 +513,23 @@ params
             console.log("All done mffff!")
         }
     });*/
+    global.startTime = performance.now()
+    
+    numArray = Array.from(Array(numServers).keys())
+
+
+    //const numArray2 = numArray.map(myFunction(matrixArray))
+    //const numArray2 = numArray.map(function(x) { return myFunction(x, scalingMatrix); })
+    numArray.map(function(x) { return scaleMultiplication2(x, scalingMatrix); })
+    //console.log("test", numArray2)
+ 
+    /*
     for(i=0; i < numServers; i++){
         scaleMultiplication(scalingMatrix, i)
-        /*
-        scaleMultiplication({array:scalingMatrix, counter:i},function(error, response){
-            if(response.result.length > 0){
-                console.log("All done mf")
-            }
-        });*/
         console.log("synchronous", i)	
     }
+    */
+    
     res.render('output',  { title: 'Multiply', uploaded: isUploaded, table:"<a href='/output'> View results </a>"}) 
     
    

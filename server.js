@@ -117,7 +117,7 @@ function addMatrices(call, callback) {
       }
       */
       proto_result = lib.toMessage(result)
-      console.log("Result", result)
+      //console.log("Result", result)
       callback(null, proto_result);
   
       return proto_result
