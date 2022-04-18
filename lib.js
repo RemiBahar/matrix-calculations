@@ -178,7 +178,7 @@ exports.scaleMultiplication = function(nodeNo, matrixArray, string1, targetArray
 }
 
 exports.subMatrix = function(matrix, n1, n2){
-    console.log("matrix", matrix)
+    //console.log("matrix", matrix)
     let i = 0
     let j = 0
     var result = ""

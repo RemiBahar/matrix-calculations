@@ -66,7 +66,7 @@ const path2 = path.resolve('./uploads/matrix2.txt')
 
 // Extra functions
 const lib = require('./lib');
-const { matrix } = require('mathjs');
+const { matrix, e } = require('mathjs');
 
 var matrix1 = false;
 var matrix2 = false;
@@ -85,7 +85,7 @@ checkUpload = function(reload){
     returnVal = false
     if (fs.existsSync(path1, 'UTF-8') && fs.existsSync(path2, 'UTF-8')) {
         returnVal = true
-        if(reload || !matrix1|| !matrix2 || !string1 || !string2){
+        if( !matrix1|| !matrix2 || !string1 || !string2){
             string1 = fs.readFileSync(path1).toString("UTF-8")
             matrix1 = string1.split("\n")
             string2 = fs.readFileSync(path2).toString("UTF-8")
@@ -161,8 +161,8 @@ app.post('/process-upload-matrix', async (req, res) => {
                         req.files.matrix1.mv(path1);
                         req.files.matrix2.mv(path2);
 
-                        matrix1 = array1
-                        matrix2 = array2
+                        matrix1 = string1.split("\n")
+                        matrix2 = string2.split("\n")
 
                         redirect = "/"
                     }
