@@ -69,21 +69,25 @@ function addMatrices(call, callback) {
     /*
         Adds together matrices and returns the result as a proto
     */
-    var matrix1 = serverToArray(call.request.array1)
-    var matrix2 = serverToArray(call.request.array2)
-    const N = matrix1.length
-    var result =  Array(N).fill().map(() => Array(N)); //O(n^2)
-
-    var result = matrix1
-    for (var i = 0; i < N; i++){
-        for (var j = 0; j < N; j++){
-            result[i][j] = matrix1[i][j] + matrix2[i][j]; //O(3)
-    }}
-
-    proto_result = lib.toMessage(result)
-    callback(null, proto_result);
-
-    return proto_result
+        console.log("Performing Addition")
+        var _matrix1 = toList(call.request.array1)
+        var _matrix2 = toList(call.request.array2)
+        const N = _matrix1.length
+        const M = _matrix2.length
+        const P = _matrix2[0].length
+       
+        var result =  Array(N).fill().map(() => Array(P)); //O(n^2)
+    
+        for (var i = 0; i < N; i++){
+            for (var j = 0; j < P; j++){
+                result[i][j] = _matrix1[i][j] + _matrix2[i][j]; //O(3)
+        }}
+        proto_result = lib.toMessage(result)
+        //console.log("Result", result)
+        callback(null, proto_result);
+    
+        return proto_result
+  
   }
 
   // Perform matrix multiplication
@@ -91,9 +95,9 @@ function addMatrices(call, callback) {
     console.log("Performing Multiplication")
     var _matrix1 = toList(call.request.array1)
     var _matrix2 = toList(call.request.array2)
-    N = _matrix1.length
-    M = _matrix2.length
-    P = _matrix2[0].length
+    const N = _matrix1.length
+    const M = _matrix2.length
+    const P = _matrix2[0].length
    
     var result =  Array(N).fill().map(() => Array(P)); //O(n^2)
 

@@ -150,30 +150,39 @@ exports.createResultMatrix = function(noNodes, matrix2){
     return result
 }
 
+function responseToArray(response){
+    output = []
+    for (i = 0; i < response.length; i++){
+        addRow = ""
+        for (j = 0; j < response[i].items.length; j++){
+            addRow += "<td>" + response[i].items[j] + "</td>"
+        }
+        output.push(addRow.trim())
+    } 
+    return output
+}
+
 exports.scaleMultiplication = function(nodeNo, matrixArray, string1, targetArray) {
     return new Promise(resolve => {
         var client = new matrixProto.Greeter(targetArray[nodeNo], grpc.credentials.createInsecure());
         client.multiplyMatrices({array1:string1,array2:matrixArray[nodeNo]},function(err, response) {
             if(response.message.length > 0){
                 console.log("Received response from server", nodeNo)
-                x = response.message
-                counter = nodeNo
-                
-                output = []
-                for (i = 0; i < x.length; i++){
-                    addRow = ""
-                    for (j = 0; j < x[i].items.length; j++){
-                        addRow += x[i].items[j] + " "
-                    }
-                    output.push(addRow.trim())
-                }
-
-                resolve(output);
-                
-                
+                resolve(responseToArray(response.message));    
             } 
         });
+    });
+}
 
+exports.scaleAddition = function(nodeNo, matrixArray, string1, targetArray) {
+    return new Promise(resolve => {
+        var client = new matrixProto.Greeter(targetArray[nodeNo], grpc.credentials.createInsecure());
+        client.addMatrices({array1:string1,array2:matrixArray[nodeNo]},function(err, response) {
+            if(response.message.length > 0){
+                console.log("Received response from server", nodeNo)
+                resolve(responseToArray(response.message));    
+            } 
+        });
     });
 }
 
@@ -200,3 +209,4 @@ exports.subMatrix = function(matrix, n1, n2){
     return result.trim()
        
 };
+
