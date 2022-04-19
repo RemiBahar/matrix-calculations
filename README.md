@@ -91,7 +91,19 @@ location / {
     }
 ```
 
-6. Test to see if everything is configured correctly
+6. Allow large file uploads
+
+```bash
+    cd / 
+    sudo nano /etc/nginx/nginx.conf
+```
+
+Add the following line right at the top of the http {...} section
+```bash
+    client_max_body_size 100M;
+```
+
+7. Test to see if everything is configured correctly
 ```bash
 sudo nginx -t
 ```
@@ -99,21 +111,21 @@ sudo nginx -t
 ```bash
 sudo systemctl restart nginx
 ```
-7. From project directory (matrix-calculations)@
+8. From project directory (matrix-calculations)@
 ```bash
 node app.js
 ```
 
 Configure app to run in the background as a process
 Start app process (this ensures the app is running)
-8. Run:
+9. Run:
 ```bash
 sudo npm install -g pm2
 cd ~/matrix-calculations
 pm2 start app.js
 ```
 
-9. Finally: visit ip address in browser, the app's homepage should now be shown
+10. Finally: visit ip address in browser, the app's homepage should now be shown
 
 ## Set up server(s)
 
