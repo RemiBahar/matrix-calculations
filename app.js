@@ -253,7 +253,7 @@ app.post(["/multiply", "/add"], async (req, res) => {
     */
     console.log()
     const deadline = req.body["deadline"]
-    var numServers = (numBlockCalls * (footprint/1000))/(deadline*1000)
+    var numServers = (numBlockCalls * (footprint/1000))/(deadline)
 
     if(numServers >= targetArray.length){
         numServers = 8

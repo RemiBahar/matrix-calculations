@@ -8,14 +8,14 @@ block content
                 div !{numBlockCalls}
                 div 
                     b 
-                        label(for="deadline") Deadline (s)
+                        label(for="deadline") Deadline (ms)
                             input(type="number" id="deadline" oninput="calculateServers()" name="deadline" min="1" required)
                 div 
                     label(for="numServers") Number of servers needed 
                         input(type="text" id="numServers" disabled)
                 script(type="text/javascript").
                     function calculateServers() {
-                    var x = (document.getElementById("numBlockCalls").value * (document.getElementById("footprint").value / 1000))/(document.getElementById("deadline").value*1000);
+                    var x = (document.getElementById("numBlockCalls").value * (document.getElementById("footprint").value / 1000))/(document.getElementById("deadline").value);
                     document.getElementById("numServers").value = x;
                     }
 

@@ -104,7 +104,16 @@ sudo systemctl restart nginx
 node app.js
 ```
 
-8. Finally: visit ip address in browser, the app's homepage should now be shown
+Configure app to run in the background as a process
+Start app process (this ensures the app is running)
+8. Run:
+```bash
+sudo npm install -g pm2
+cd ~/matrix-calculations
+pm2 start app.js
+```
+
+9. Finally: visit ip address in browser, the app's homepage should now be shown
 
 ## Set up server(s)
 
@@ -144,15 +153,22 @@ Start server process (this ensures the server is running)
 1. Run:
 ```bash
 sudo npm install -g pm2
-pm2 start ~/matrix-calculations/server.js
+cd ~/matrix-calculations
+pm2 start server.js
 ```
 
 You can also use systemctl to start pm2 on startup in-case the server needs restarting.
 
 Update client with server details
 1. Find the internal IP address of the server you created 
-2. From the client: add a new entry to servers.txt in the form ip_address:50051
+2. From the client: add a new entry to the top of servers.txt in the form ip_address:50051
 ```bash
-cd ~/matrix-calculations
-nano servers.txt
+nano ~/matrix-calculations/servers.txt
 ```
+3. Restart the client
+```bash
+pm2 stop app
+pm2 start app
+```
+
+4. Visit the app website and click multiply to test if the server is set-up correctly
