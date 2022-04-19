@@ -262,7 +262,6 @@ app.post(["/multiply", "/add"], async (req, res) => {
     }
     console.log("numServers", numServers)
     console.log("footprint", footprint)
-    console.time('Multiplication time:')
     isUploaded = checkUpload()
     scalingMatrix = lib.createResultMatrix(numServers, matrix2)
 
