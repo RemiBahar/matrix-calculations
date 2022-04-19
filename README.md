@@ -47,6 +47,8 @@ Configure Nginx
 1. Run
 ```bash
 sudo ufw enable
+sudo ufw default allow incoming
+sudo ufw default allow outgoing
 ```
 
 ```bash
