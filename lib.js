@@ -203,13 +203,21 @@ exports.scaleMultiplication = function(nodeNo, matrixArray, string1, targetArray
     return new Promise(resolve => {
         var client = new matrixProto.Greeter(targetArray[nodeNo], grpc.credentials.createInsecure());
         client.multiplyMatrices({array1:string1,array2:matrixArray[nodeNo]},function(err, response) {
-            if(response.message.length > 0){
+            if(response){
                 console.log("Received response from server", nodeNo)
                 resolve(responseToArray(response.message));    
+            }  
+            else if(err){
+                console.log("Error calculating on server", targetArray[nodeNo])
+                console.log("Err", err)
+                process.exit(5)
             } 
+            
+            
         });
     });
 }
+
 
 exports.scaleAddition = function(nodeNo, matrixArray, string1, targetArray) {
     /*
@@ -227,9 +235,14 @@ exports.scaleAddition = function(nodeNo, matrixArray, string1, targetArray) {
     return new Promise(resolve => {
         var client = new matrixProto.Greeter(targetArray[nodeNo], grpc.credentials.createInsecure());
         client.addMatrices({array1:string1,array2:matrixArray[nodeNo]},function(err, response) {
-            if(response.message.length > 0){
+            if(response){
                 console.log("Received response from server", nodeNo)
                 resolve(responseToArray(response.message));    
+            }
+            else if(err){
+                console.log("Error calculating on server", targetArray[nodeNo])
+                console.log("Err", err)
+                process.exit(5)
             } 
         });
     });

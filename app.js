@@ -188,20 +188,25 @@ app.get('/deadline/calculation/:calculation', async (req, res) => {
         if (req.params["calculation"] == "add") {
             var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure()); 		
             client.addMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
-                    console.log("Received response")
-                    if(response.message.length > 0){
-                    var endTime = performance.now()
-                    footprint = endTime - startTime
-                    numBlockCalls = matrix1.length**2/n**2
+                    if(response){
+                        console.log("Received response")
+                        var endTime = performance.now()
+                        footprint = endTime - startTime
+                        numBlockCalls = matrix1.length**2/n**2
 
-                    res.render('deadline',  
-                        { title: 'Deadline', 
-                        uploaded: checkUpload(), 
-                        process: "<form action='/add' method='post'>", 
-                        footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
-                        numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
-                        })
+                        res.render('deadline',  
+                            { title: 'Deadline', 
+                            uploaded: checkUpload(), 
+                            process: "<form action='/add' method='post'>", 
+                            footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
+                            numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
+                            })
                     } 
+                    else if(err){
+                        console.log("Error calculating on server", targetArray[0])
+                        console.log("Err", err)
+                        process.exit(5)
+                    }
                     
                 });
         }
@@ -209,19 +214,24 @@ app.get('/deadline/calculation/:calculation', async (req, res) => {
             var client = new matrixProto.Greeter(targetArray[0], grpc.credentials.createInsecure()); 		
             client.multiplyMatrices({array1:testMatrix1,array2:testMatrix2},function(err, response) {
                     console.log("Received response")
-                    if(response.message.length > 0){
-                    var endTime = performance.now()
-                    footprint = endTime - startTime
-                    numBlockCalls = matrix1.length**2/n**2
+                    if(response){
+                        var endTime = performance.now()
+                        footprint = endTime - startTime
+                        numBlockCalls = matrix1.length**2/n**2
 
-                    res.render('deadline',  
-                        { title: 'Deadline', 
-                        uploaded: checkUpload(), 
-                        process: "<form action='/multiply' method='post'>", 
-                        footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
-                        numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
-                        })
-                    } 
+                        res.render('deadline',  
+                            { title: 'Deadline', 
+                            uploaded: checkUpload(), 
+                            process: "<form action='/multiply' method='post'>", 
+                            footprint: "<label> Footprint (ms) </label><input type='text' id='footprint' value='"+footprint+"' disabled>",
+                            numBlockCalls: "<label> Number of block calls  </label><input type='text' id='numBlockCalls' value='"+numBlockCalls+"' disabled>"
+                            })
+                        } 
+                    else if(err){
+                        console.log("Error calculating on server", targetArray[0])
+                        console.log("Err", err)
+                        process.exit(5)
+                    }
                     
                 });
         }
