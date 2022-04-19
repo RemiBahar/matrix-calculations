@@ -47,9 +47,19 @@ Configure Nginx
 1. Run
 ```bash
 sudo ufw enable
+```
+
+I have enabled all incoming/outgoing traffic through the firewall because otherwise ssh into the instance can be blocked by ufw. In a live system, this would need to be revised.
+
+```bash
 sudo ufw default allow incoming
+```
+
+
+```bash
 sudo ufw default allow outgoing
 ```
+
 
 ```bash
 sudo ufw allow 'Nginx Full'
@@ -130,13 +140,14 @@ cd ~
 git clone https://github.com/RemiBahar/matrix-calculations.git
 ```
 
-Run server.js
+Start server process (this ensures the server is running)
 1. Run:
 ```bash
-cd ~
-cd matrix-calculations
-node server.js
+sudo npm install -g pm2
+pm2 start ~/matrix-calculations/server.js
 ```
+
+You can also use systemctl to start pm2 on startup in-case the server needs restarting.
 
 Update client with server details
 1. Find the internal IP address of the server you created 
